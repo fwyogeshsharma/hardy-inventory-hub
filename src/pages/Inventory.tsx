@@ -2,24 +2,50 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Package, Search, Plus, Filter } from "lucide-react";
+import { Package, Search, Filter } from "lucide-react";
+import { AddSKUDrawer } from "@/components/AddSKUDrawer";
+import { skuStorage, SKURecord } from "@/lib/localStorage";
+import { useState, useEffect } from "react";
 
 export default function Inventory() {
-  const inventoryItems = [
-    { id: 1, sku: "HTWO-LM-330", name: "HTWO Lime 330ml", brand: "HTWO", flavor: "Lime", packSize: "330ml", stock: 1250, safetyStock: 500, status: "Active" },
-    { id: 2, sku: "SKHY-BR-500", name: "Skhy Berry 500ml", brand: "Skhy", flavor: "Berry", packSize: "500ml", stock: 45, safetyStock: 200, status: "Low Stock" },
-    { id: 3, sku: "RLLIE-PC-1L", name: "Rallie Peach 1L", brand: "Rallie", flavor: "Peach", packSize: "1L", stock: 892, safetyStock: 300, status: "Active" },
-    { id: 4, sku: "HTWO-LM-4PK", name: "HTWO Lime 4-Pack", brand: "HTWO", flavor: "Lime", packSize: "4-pack", stock: 234, safetyStock: 150, status: "Active" },
-    { id: 5, sku: "SKHY-MX-330", name: "Skhy Mixed 330ml", brand: "Skhy", flavor: "Mixed", packSize: "330ml", stock: 0, safetyStock: 100, status: "Out of Stock" },
-  ];
+  const [skus, setSKUs] = useState<SKURecord[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const getStatusBadge = (status: string, stock: number, safetyStock: number) => {
+  useEffect(() => {
+    // Load SKUs from localStorage on component mount
+    setSKUs(skuStorage.getAll());
+  }, []);
+
+  const handleSKUAdded = (newSKU: SKURecord) => {
+    setSKUs(prev => [...prev, newSKU]);
+  };
+
+  // Filter SKUs based on search term
+  const filteredSKUs = skus.filter(sku => 
+    sku.skuName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sku.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sku.flavor.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate stock for display (mock data for now)
+  const getStockData = (sku: SKURecord) => {
+    // Mock stock data - in real app this would come from actual inventory
+    const mockStock = Math.floor(Math.random() * 1000) + 50;
+    const mockSafetyStock = Math.floor(mockStock * 0.3);
+    return { stock: mockStock, safetyStock: mockSafetyStock };
+  };
+
+  const getStatusBadge = (sku: SKURecord, stock: number, safetyStock: number) => {
     if (stock === 0) {
       return <Badge variant="destructive">Out of Stock</Badge>;
     } else if (stock <= safetyStock) {
       return <Badge className="bg-warning text-warning-foreground">Low Stock</Badge>;
-    } else {
+    } else if (sku.status === 'active') {
       return <Badge className="bg-success text-success-foreground">Active</Badge>;
+    } else if (sku.status === 'upcoming') {
+      return <Badge className="bg-primary text-primary-foreground">Upcoming</Badge>;
+    } else {
+      return <Badge variant="secondary">Discontinued</Badge>;
     }
   };
 
@@ -30,16 +56,18 @@ export default function Inventory() {
           <h2 className="text-3xl font-bold text-foreground">Inventory Management</h2>
           <p className="text-muted-foreground">Track and manage all SKUs and materials</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New SKU
-        </Button>
+        <AddSKUDrawer onSKUAdded={handleSKUAdded} />
       </div>
 
       <div className="flex items-center space-x-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="Search SKUs..." className="pl-10" />
+          <Input 
+            placeholder="Search SKUs..." 
+            className="pl-10" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         <Button variant="outline">
           <Filter className="h-4 w-4 mr-2" />
@@ -53,7 +81,7 @@ export default function Inventory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total SKUs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">247</div>
+            <div className="text-2xl font-bold">{skus.length}</div>
             <p className="text-xs text-muted-foreground">+12 from last month</p>
           </CardContent>
         </Card>
@@ -62,7 +90,7 @@ export default function Inventory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Low Stock</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">23</div>
+            <div className="text-2xl font-bold text-warning">{skus.filter(sku => sku.status === 'upcoming').length}</div>
             <p className="text-xs text-muted-foreground">Below safety levels</p>
           </CardContent>
         </Card>
@@ -71,7 +99,7 @@ export default function Inventory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Out of Stock</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">5</div>
+            <div className="text-2xl font-bold text-destructive">{skus.filter(sku => sku.status === 'discontinued').length}</div>
             <p className="text-xs text-muted-foreground">Requires immediate attention</p>
           </CardContent>
         </Card>
@@ -95,33 +123,44 @@ export default function Inventory() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {inventoryItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <div>
-                      <h3 className="font-medium">{item.name}</h3>
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <span>SKU: {item.sku}</span>
-                        <span>•</span>
-                        <span>{item.brand}</span>
-                        <span>•</span>
-                        <span>{item.flavor}</span>
-                        <span>•</span>
-                        <span>{item.packSize}</span>
+            {filteredSKUs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {skus.length === 0 ? "No SKUs found. Add your first SKU to get started." : "No SKUs match your search criteria."}
+              </div>
+            ) : (
+              filteredSKUs.map((sku) => {
+                const stockData = getStockData(sku);
+                return (
+                  <div key={sku.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <div>
+                          <h3 className="font-medium">{sku.skuName}</h3>
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <span>ID: {sku.id.slice(-8)}</span>
+                            <span>•</span>
+                            <span>{sku.brand}</span>
+                            <span>•</span>
+                            <span>{sku.flavor}</span>
+                            <span>•</span>
+                            <span>{sku.packSize}</span>
+                            <span>•</span>
+                            <span>{sku.skuType === 'kit' ? 'Kit SKU' : 'Single SKU'}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <div className="font-medium">{stockData.stock.toLocaleString()} {sku.unitOfMeasure.toLowerCase()}s</div>
+                        <div className="text-sm text-muted-foreground">Safety: {stockData.safetyStock}</div>
+                      </div>
+                      {getStatusBadge(sku, stockData.stock, stockData.safetyStock)}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="font-medium">{item.stock.toLocaleString()} units</div>
-                    <div className="text-sm text-muted-foreground">Safety: {item.safetyStock}</div>
-                  </div>
-                  {getStatusBadge(item.status, item.stock, item.safetyStock)}
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
