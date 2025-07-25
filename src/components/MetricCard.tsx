@@ -10,6 +10,7 @@ interface MetricCardProps {
   trend?: "up" | "down" | "stable";
   trendValue?: string;
   variant?: "default" | "success" | "warning" | "destructive";
+  className?: string;
 }
 
 export const MetricCard = ({ 
@@ -19,7 +20,8 @@ export const MetricCard = ({
   icon: Icon, 
   trend, 
   trendValue,
-  variant = "default"
+  variant = "default",
+  className = ""
 }: MetricCardProps) => {
   const getTrendColor = () => {
     switch (trend) {
@@ -46,16 +48,16 @@ export const MetricCard = ({
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-lg ${getCardVariant()}`}>
+    <Card className={`transition-all duration-200 hover:shadow-lg ${getCardVariant()} ${className}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-sm font-medium">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="h-4 w-4" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
-        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+        <div className="text-2xl font-bold">{value}</div>
+        <div className="flex items-center space-x-2 text-xs">
           <span>{description}</span>
           {trendValue && (
             <Badge variant="secondary" className={getTrendColor()}>

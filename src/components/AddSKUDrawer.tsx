@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -26,41 +26,80 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { CalendarIcon, Plus, Trash2, Package, Sparkles, Target, Users, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { skuStorage, SKURecord } from "@/lib/localStorage";
+import { dataService, Brand, Flavor, PackSize, SKU } from "@/lib/database";
 
 interface AddSKUDrawerProps {
-  onSKUAdded: (sku: SKURecord) => void;
+  onSKUAdded: (sku: SKU) => void;
 }
 
 export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     skuName: "",
-    brand: "",
-    flavor: "",
-    packSize: "",
+    brandId: 0,
+    flavorId: 0,
+    packSizeId: 0,
     skuType: "single" as "single" | "kit",
     status: "active" as "active" | "upcoming" | "discontinued",
     barcode: "",
-    unitOfMeasure: "",
+    unitOfMeasure: "Each",
     bomVersion: "",
     launchDate: undefined as Date | undefined,
   });
   
-  const [componentSKUs, setComponentSKUs] = useState<{ skuId: string; quantity: number }[]>([]);
+  const [componentSKUs, setComponentSKUs] = useState<{ component_sku_id: number; quantity: number }[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const availableSKUs = skuStorage.getAll().filter(sku => sku.skuType === 'single');
-  const brands = ["HTWO", "Skhy", "Rallie"];
-  const flavors = ["Lime", "Berry", "Peach", "Mixed", "Original", "Citrus", "Tropical"];
-  const packSizes = ["330ml", "500ml", "1L", "4-pack", "6-pack", "12-pack"];
-  const unitOfMeasures = ["Unit", "Liter", "Pack"];
+  // Database-driven dropdown data
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [flavors, setFlavors] = useState<Flavor[]>([]);
+  const [packSizes, setPackSizes] = useState<PackSize[]>([]);
+  const [availableSKUs, setAvailableSKUs] = useState<SKU[]>([]);
+  const unitOfMeasures = ["Each", "Set", "Pair", "Kit", "Case", "Liter", "Gallon", "Pound", "Kilogram"];
   const statuses = ["active", "upcoming", "discontinued"];
+
+  // Load dropdown data on component mount
+  React.useEffect(() => {
+    loadDropdownData();
+  }, []);
+
+  React.useEffect(() => {
+    if (open) {
+      loadDropdownData();
+    }
+  }, [open]);
+
+  const loadDropdownData = async () => {
+    try {
+      const [brandsData, flavorsData, packSizesData, skusData] = await Promise.all([
+        dataService.getBrands(),
+        dataService.getFlavors(),
+        dataService.getPackSizes(),
+        dataService.getSKUs()
+      ]);
+      
+      setBrands(brandsData.filter(b => b.is_active));
+      setFlavors(flavorsData.filter(f => f.is_active));
+      setPackSizes(packSizesData.filter(ps => ps.is_active));
+      setAvailableSKUs(skusData.filter(s => s.sku_type === 'single' && s.status === 'active'));
+    } catch (error) {
+      console.error('Error loading dropdown data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load form data. Please refresh and try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const generateBarcode = () => {
     const code = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -71,9 +110,9 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
     const newErrors: Record<string, string> = {};
     
     if (!formData.skuName.trim()) newErrors.skuName = "SKU Name is required";
-    if (!formData.brand) newErrors.brand = "Brand is required";
-    if (!formData.flavor) newErrors.flavor = "Flavor is required";
-    if (!formData.packSize) newErrors.packSize = "Pack Size is required";
+    if (!formData.brandId || formData.brandId === 0) newErrors.brandId = "Brand is required";
+    if (!formData.flavorId || formData.flavorId === 0) newErrors.flavorId = "Flavor is required";
+    if (!formData.packSizeId || formData.packSizeId === 0) newErrors.packSizeId = "Pack Size is required";
     if (!formData.status) newErrors.status = "Status is required";
     if (!formData.barcode.trim()) newErrors.barcode = "Barcode is required";
     if (!formData.unitOfMeasure) newErrors.unitOfMeasure = "Unit of Measure is required";
@@ -83,11 +122,23 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       newErrors.componentSKUs = "Kit SKUs must have at least one component";
     }
     
+    // Validate kit components
+    if (formData.skuType === 'kit') {
+      componentSKUs.forEach((comp, index) => {
+        if (!comp.component_sku_id || comp.component_sku_id === 0) {
+          newErrors[`component_${index}`] = "Please select a component SKU";
+        }
+        if (!comp.quantity || comp.quantity < 1) {
+          newErrors[`quantity_${index}`] = "Quantity must be at least 1";
+        }
+      });
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -97,19 +148,20 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       return;
     }
 
+    setLoading(true);
     try {
-      const newSKU = skuStorage.add({
-        skuName: formData.skuName,
-        brand: formData.brand,
-        flavor: formData.flavor,
-        packSize: formData.packSize,
-        skuType: formData.skuType,
+      const newSKU = await dataService.createSKU({
+        sku_name: formData.skuName,
+        brand_id: formData.brandId,
+        flavor_id: formData.flavorId,
+        pack_size_id: formData.packSizeId,
+        sku_type: formData.skuType,
         status: formData.status,
         barcode: formData.barcode,
-        unitOfMeasure: formData.unitOfMeasure,
-        bomVersion: formData.bomVersion || undefined,
-        launchDate: formData.launchDate!.toISOString(),
-        componentSKUs: formData.skuType === 'kit' ? componentSKUs : undefined,
+        unit_of_measure: formData.unitOfMeasure,
+        bom_version: formData.bomVersion || undefined,
+        launch_date: formData.launchDate!.toISOString().split('T')[0], // Store as date only
+        components: formData.skuType === 'kit' ? componentSKUs : undefined,
       });
 
       onSKUAdded(newSKU);
@@ -118,13 +170,13 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       // Reset form
       setFormData({
         skuName: "",
-        brand: "",
-        flavor: "",
-        packSize: "",
+        brandId: 0,
+        flavorId: 0,
+        packSizeId: 0,
         skuType: "single",
         status: "active",
         barcode: "",
-        unitOfMeasure: "",
+        unitOfMeasure: "Each",
         bomVersion: "",
         launchDate: undefined,
       });
@@ -132,264 +184,535 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       setErrors({});
 
       toast({
-        title: "SKU Created",
-        description: `${newSKU.skuName} has been successfully created.`,
+        title: "SKU Created Successfully",
+        description: `${newSKU.sku_name} (${newSKU.sku_code}) has been added to inventory.`,
       });
     } catch (error) {
+      console.error('Error creating SKU:', error);
       toast({
         title: "Error",
         description: "Failed to create SKU. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const addComponentSKU = () => {
-    setComponentSKUs([...componentSKUs, { skuId: "", quantity: 1 }]);
+    setComponentSKUs([...componentSKUs, { component_sku_id: 0, quantity: 1 }]);
   };
 
   const removeComponentSKU = (index: number) => {
     setComponentSKUs(componentSKUs.filter((_, i) => i !== index));
   };
 
-  const updateComponentSKU = (index: number, field: 'skuId' | 'quantity', value: string | number) => {
+  const updateComponentSKU = (index: number, field: 'component_sku_id' | 'quantity', value: string | number) => {
     const updated = [...componentSKUs];
-    updated[index] = { ...updated[index], [field]: value };
+    if (field === 'component_sku_id') {
+      updated[index] = { ...updated[index], [field]: parseInt(value as string) || 0 };
+    } else {
+      updated[index] = { ...updated[index], [field]: value as number };
+    }
     setComponentSKUs(updated);
   };
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button>
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
           <Plus className="h-4 w-4 mr-2" />
           Add New SKU
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[90vh]">
-        <div className="mx-auto w-full max-w-2xl">
-          <DrawerHeader>
-            <DrawerTitle>Add New SKU</DrawerTitle>
-            <DrawerDescription>
-              Create a new SKU for the beverage inventory system.
+      <DrawerContent className="max-h-[92vh] bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="mx-auto w-full max-w-4xl">
+          <DrawerHeader className="text-center pb-6">
+            <div className="flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <DrawerTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Create New SKU
+            </DrawerTitle>
+            <DrawerDescription className="text-gray-600 text-lg">
+              Add a new automotive part to your inventory management system
             </DrawerDescription>
           </DrawerHeader>
           
-          <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
-            {/* SKU Name */}
-            <div className="space-y-2">
-              <Label htmlFor="skuName">SKU Name *</Label>
-              <Input
-                id="skuName"
-                value={formData.skuName}
-                onChange={(e) => setFormData(prev => ({ ...prev, skuName: e.target.value }))}
-                placeholder="e.g., HTWO Lime 330ml"
-                className={errors.skuName ? "border-destructive" : ""}
-              />
-              {errors.skuName && <p className="text-sm text-destructive">{errors.skuName}</p>}
-            </div>
+          <div className="px-6 space-y-6 overflow-y-auto max-h-[60vh]">
+            {/* Basic Product Information */}
+            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg">
+                  <Sparkles className="h-5 w-5 mr-2 text-blue-500" />
+                  Basic Part Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* SKU Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="skuName" className="text-sm font-semibold text-gray-700">SKU Name *</Label>
+                    <Input
+                      id="skuName"
+                      value={formData.skuName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, skuName: e.target.value }))}
+                      placeholder="e.g., ACDelco Brake Pads Set"
+                      className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all",
+                        errors.skuName ? "border-red-500 focus:border-red-500" : ""
+                      )}
+                    />
+                    {errors.skuName && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.skuName}</p>}
+                  </div>
 
-            {/* Brand */}
-            <div className="space-y-2">
-              <Label>Brand *</Label>
-              <Select value={formData.brand} onValueChange={(value) => setFormData(prev => ({ ...prev, brand: value }))}>
-                <SelectTrigger className={errors.brand ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select brand" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.brand && <p className="text-sm text-destructive">{errors.brand}</p>}
-            </div>
+                  {/* Brand */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">Brand *</Label>
+                    <Select value={formData.brandId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, brandId: parseInt(value) }))}>
+                      <SelectTrigger className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11 text-left",
+                        errors.brandId ? "border-red-500" : ""
+                      )}>
+                        <SelectValue placeholder="Select manufacturer...">
+                          {formData.brandId > 0 && (
+                            <div className="flex items-center">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center mr-2">
+                                <span className="text-white text-xs font-bold">
+                                  {brands.find(b => b.id === formData.brandId)?.name.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="font-medium">{brands.find(b => b.id === formData.brandId)?.name}</span>
+                            </div>
+                          )}
+                        </SelectValue>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Brands</div>
+                          {brands.map((brand) => (
+                            <SelectItem key={brand.id} value={brand.id.toString()} className="h-12 cursor-pointer">
+                              <div className="flex items-center space-x-3 py-1">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
+                                  <span className="text-white text-sm font-bold">{brand.name.charAt(0)}</span>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900">{brand.name}</div>
+                                  {brand.description && (
+                                    <div className="text-xs text-gray-500">{brand.description}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
+                      </SelectContent>
+                    </Select>
+                    {errors.brandId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.brandId}</p>}
+                  </div>
 
-            {/* Flavor */}
-            <div className="space-y-2">
-              <Label>Flavor *</Label>
-              <Select value={formData.flavor} onValueChange={(value) => setFormData(prev => ({ ...prev, flavor: value }))}>
-                <SelectTrigger className={errors.flavor ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select flavor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {flavors.map((flavor) => (
-                    <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.flavor && <p className="text-sm text-destructive">{errors.flavor}</p>}
-            </div>
+                  {/* Category */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">Category *</Label>
+                    <Select value={formData.flavorId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, flavorId: parseInt(value) }))}>
+                      <SelectTrigger className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11",
+                        errors.flavorId ? "border-red-500" : ""
+                      )}>
+                        <SelectValue placeholder="Select category...">
+                          {formData.flavorId > 0 && (
+                            <div className="flex items-center">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center mr-2">
+                                <span className="text-white text-xs font-bold">
+                                  {flavors.find(f => f.id === formData.flavorId)?.name.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="font-medium">{flavors.find(f => f.id === formData.flavorId)?.name}</span>
+                            </div>
+                          )}
+                        </SelectValue>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Categories</div>
+                          {flavors.map((flavor) => (
+                            <SelectItem key={flavor.id} value={flavor.id.toString()} className="h-10 cursor-pointer">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">{flavor.name.charAt(0)}</span>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900">{flavor.name}</div>
+                                  {flavor.description && (
+                                    <div className="text-xs text-gray-500">{flavor.description}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
+                      </SelectContent>
+                    </Select>
+                    {errors.flavorId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.flavorId}</p>}
+                  </div>
 
-            {/* Pack Size */}
-            <div className="space-y-2">
-              <Label>Pack Size *</Label>
-              <Select value={formData.packSize} onValueChange={(value) => setFormData(prev => ({ ...prev, packSize: value }))}>
-                <SelectTrigger className={errors.packSize ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select pack size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {packSizes.map((size) => (
-                    <SelectItem key={size} value={size}>{size}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.packSize && <p className="text-sm text-destructive">{errors.packSize}</p>}
-            </div>
-
-            {/* SKU Type */}
-            <div className="space-y-2">
-              <Label>SKU Type *</Label>
-              <RadioGroup
-                value={formData.skuType}
-                onValueChange={(value: "single" | "kit") => setFormData(prev => ({ ...prev, skuType: value }))}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="single" id="single" />
-                  <Label htmlFor="single">Single SKU</Label>
+                  {/* Package Type */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">Package Type *</Label>
+                    <Select value={formData.packSizeId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, packSizeId: parseInt(value) }))}>
+                      <SelectTrigger className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11",
+                        errors.packSizeId ? "border-red-500" : ""
+                      )}>
+                        <SelectValue placeholder="Select package type...">
+                          {formData.packSizeId > 0 && (
+                            <div className="flex items-center">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center mr-2">
+                                <Package className="h-3 w-3 text-white" />
+                              </div>
+                              <span className="font-medium">{packSizes.find(ps => ps.id === formData.packSizeId)?.name}</span>
+                              {packSizes.find(ps => ps.id === formData.packSizeId)?.volume_ml && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({packSizes.find(ps => ps.id === formData.packSizeId)?.volume_ml}ml)
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </SelectValue>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Pack Sizes</div>
+                          {packSizes.map((packSize) => (
+                            <SelectItem key={packSize.id} value={packSize.id.toString()} className="h-12 cursor-pointer">
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center">
+                                    <Package className="h-4 w-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900">{packSize.name}</div>
+                                    <div className="text-xs text-gray-500">
+                                      {packSize.volume_ml && `${packSize.volume_ml}ml`}
+                                      {packSize.unit_count > 1 && ` • ${packSize.unit_count} units`}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
+                      </SelectContent>
+                    </Select>
+                    {errors.packSizeId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.packSizeId}</p>}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="kit" id="kit" />
-                  <Label htmlFor="kit">Kit SKU</Label>
+              </CardContent>
+            </Card>
+
+            {/* SKU Configuration */}
+            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg">
+                  <Target className="h-5 w-5 mr-2 text-purple-500" />
+                  SKU Configuration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* SKU Type */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-gray-700">SKU Type *</Label>
+                    <RadioGroup
+                      value={formData.skuType}
+                      onValueChange={(value: "single" | "kit") => setFormData(prev => ({ ...prev, skuType: value }))}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                        <RadioGroupItem value="single" id="single" className="text-blue-600" />
+                        <div className="flex-1">
+                          <Label htmlFor="single" className="font-medium cursor-pointer">Single SKU</Label>
+                          <p className="text-xs text-gray-500">Individual product</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                        <RadioGroupItem value="kit" id="kit" className="text-blue-600" />
+                        <div className="flex-1">
+                          <Label htmlFor="kit" className="font-medium cursor-pointer">Kit SKU</Label>
+                          <p className="text-xs text-gray-500">Bundle of products</p>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">Status *</Label>
+                    <Select value={formData.status} onValueChange={(value: "active" | "upcoming" | "discontinued") => setFormData(prev => ({ ...prev, status: value }))}>
+                      <SelectTrigger className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 transition-all",
+                        errors.status ? "border-red-500" : ""
+                      )}>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            <div className="flex items-center">
+                              <Badge 
+                                className={cn(
+                                  "mr-2 text-xs",
+                                  status === "active" ? "bg-green-100 text-green-700" :
+                                  status === "upcoming" ? "bg-blue-100 text-blue-700" :
+                                  "bg-gray-100 text-gray-700"
+                                )}
+                              >
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.status && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.status}</p>}
+                  </div>
                 </div>
-              </RadioGroup>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Status */}
-            <div className="space-y-2">
-              <Label>Status *</Label>
-              <Select value={formData.status} onValueChange={(value: "active" | "upcoming" | "discontinued") => setFormData(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger className={errors.status ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((status) => (
-                    <SelectItem key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.status && <p className="text-sm text-destructive">{errors.status}</p>}
-            </div>
+            {/* Product Details */}
+            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg">
+                  <Package className="h-5 w-5 mr-2 text-green-500" />
+                  Product Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Barcode */}
+                  <div className="space-y-2">
+                    <Label htmlFor="barcode" className="text-sm font-semibold text-gray-700">Barcode *</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="barcode"
+                        value={formData.barcode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                        placeholder="Enter barcode"
+                        className={cn(
+                          "flex-1 bg-white/80 border-gray-200 focus:border-blue-500 transition-all",
+                          errors.barcode ? "border-red-500" : ""
+                        )}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={generateBarcode}
+                        className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        Generate
+                      </Button>
+                    </div>
+                    {errors.barcode && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.barcode}</p>}
+                  </div>
 
-            {/* Barcode */}
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode *</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="barcode"
-                  value={formData.barcode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                  placeholder="Enter barcode"
-                  className={cn("flex-1", errors.barcode ? "border-destructive" : "")}
-                />
-                <Button type="button" variant="outline" onClick={generateBarcode}>
-                  Generate
-                </Button>
-              </div>
-              {errors.barcode && <p className="text-sm text-destructive">{errors.barcode}</p>}
-            </div>
+                  {/* Unit of Measure */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">Unit of Measure *</Label>
+                    <Select value={formData.unitOfMeasure} onValueChange={(value) => setFormData(prev => ({ ...prev, unitOfMeasure: value }))}>
+                      <SelectTrigger className={cn(
+                        "bg-white/80 border-gray-200 focus:border-blue-500 transition-all",
+                        errors.unitOfMeasure ? "border-red-500" : ""
+                      )}>
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unitOfMeasures.map((unit) => (
+                          <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.unitOfMeasure && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.unitOfMeasure}</p>}
+                  </div>
 
-            {/* Unit of Measure */}
-            <div className="space-y-2">
-              <Label>Unit of Measure *</Label>
-              <Select value={formData.unitOfMeasure} onValueChange={(value) => setFormData(prev => ({ ...prev, unitOfMeasure: value }))}>
-                <SelectTrigger className={errors.unitOfMeasure ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {unitOfMeasures.map((unit) => (
-                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.unitOfMeasure && <p className="text-sm text-destructive">{errors.unitOfMeasure}</p>}
-            </div>
-
-            {/* Launch Date */}
-            <div className="space-y-2">
-              <Label>Launch Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.launchDate && "text-muted-foreground",
-                      errors.launchDate ? "border-destructive" : ""
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.launchDate ? format(formData.launchDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.launchDate}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, launchDate: date }))}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {errors.launchDate && <p className="text-sm text-destructive">{errors.launchDate}</p>}
-            </div>
+                  {/* Launch Date */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-semibold text-gray-700">Launch Date *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full md:w-auto justify-start text-left font-normal bg-white/80 border-gray-200 focus:border-blue-500 transition-all",
+                            !formData.launchDate && "text-gray-500",
+                            errors.launchDate ? "border-red-500" : ""
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.launchDate ? format(formData.launchDate, "PPP") : "Pick a launch date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.launchDate}
+                          onSelect={(date) => setFormData(prev => ({ ...prev, launchDate: date }))}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {errors.launchDate && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.launchDate}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Component SKUs (for Kit SKU) */}
             {formData.skuType === 'kit' && (
-              <div className="space-y-2">
-                <Label>Component SKUs *</Label>
-                {componentSKUs.map((component, index) => (
-                  <div key={index} className="flex space-x-2 items-end">
-                    <div className="flex-1">
-                      <Select 
-                        value={component.skuId} 
-                        onValueChange={(value) => updateComponentSKU(index, 'skuId', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select SKU" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableSKUs.map((sku) => (
-                            <SelectItem key={sku.id} value={sku.id}>{sku.skuName}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="w-24">
-                      <Input
-                        type="number"
-                        value={component.quantity}
-                        onChange={(e) => updateComponentSKU(index, 'quantity', parseInt(e.target.value) || 1)}
-                        placeholder="Qty"
-                        min="1"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeComponentSKU(index)}
+              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg">
+                    <Users className="h-5 w-5 mr-2 text-orange-500" />
+                    Kit Components
+                    <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700 border-orange-200">
+                      {componentSKUs.length} components
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    {componentSKUs.map((component, index) => (
+                      <div key={index} className="flex space-x-3 items-end p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex-1">
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">Component SKU</Label>
+                          <Select 
+                            value={component.component_sku_id.toString()} 
+                            onValueChange={(value) => updateComponentSKU(index, 'component_sku_id', value)}
+                          >
+                            <SelectTrigger className="bg-white border-gray-200 h-10">
+                              <SelectValue placeholder="Select a component SKU">
+                                {component.component_sku_id > 0 && (
+                                  <div className="flex items-center">
+                                    <Badge variant="outline" className="mr-2 text-xs">
+                                      {availableSKUs.find(s => s.id === component.component_sku_id)?.brand?.name}
+                                    </Badge>
+                                    {availableSKUs.find(s => s.id === component.component_sku_id)?.sku_name}
+                                  </div>
+                                )}
+                              </SelectValue>
+                              <ChevronDown className="h-4 w-4 opacity-50" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              <div className="p-2">
+                                <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available SKUs</div>
+                                {availableSKUs.map((sku) => (
+                                  <SelectItem key={sku.id} value={sku.id.toString()} className="h-12 cursor-pointer">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-indigo-600 flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold">{sku.brand?.name?.charAt(0) || 'S'}</span>
+                                      </div>
+                                      <div>
+                                        <div className="font-medium text-gray-900">{sku.sku_name}</div>
+                                        <div className="text-xs text-gray-500">
+                                          {sku.brand?.name} • {sku.flavor?.name} • {sku.pack_size?.name}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </div>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-24">
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">Qty</Label>
+                          <Input
+                            type="number"
+                            value={component.quantity}
+                            onChange={(e) => updateComponentSKU(index, 'quantity', parseInt(e.target.value) || 1)}
+                            placeholder="1"
+                            min="1"
+                            className="bg-white border-gray-200"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeComponentSKU(index)}
+                          className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {componentSKUs.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                        <p className="text-sm">No components added yet</p>
+                        <p className="text-xs text-gray-400">Kit SKUs require at least one component</p>
+                      </div>
+                    )}
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={addComponentSKU} 
+                      className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Component SKU
                     </Button>
+                    {errors.componentSKUs && <p className="text-sm text-red-500 flex items-center mt-2"><Target className="h-3 w-3 mr-1" />{errors.componentSKUs}</p>}
                   </div>
-                ))}
-                <Button type="button" variant="outline" onClick={addComponentSKU} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Component
-                </Button>
-                {errors.componentSKUs && <p className="text-sm text-destructive">{errors.componentSKUs}</p>}
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
 
-          <DrawerFooter>
-            <Button onClick={handleSubmit}>Create SKU</Button>
-            <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DrawerClose>
+          <DrawerFooter className="pt-6 pb-6 px-6 bg-white/50 backdrop-blur-sm border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto w-full">
+              <Button 
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Package className="h-4 w-4 mr-2" />
+                    Create SKU
+                  </>
+                )}
+              </Button>
+              <DrawerClose asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 bg-white/80 border-gray-300 hover:bg-gray-50"
+                  size="lg"
+                >
+                  Cancel
+                </Button>
+              </DrawerClose>
+            </div>
+            
+            <Separator className="my-4" />
+            
+            <div className="text-center text-xs text-gray-500">
+              All fields marked with * are required
+            </div>
           </DrawerFooter>
         </div>
       </DrawerContent>
