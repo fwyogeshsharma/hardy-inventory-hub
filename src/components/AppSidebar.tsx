@@ -56,7 +56,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8  rounded-lg flex items-center justify-center">
-            <img className="w-9 h-9  rounded-lg flex items-center justify-center" src="/favicon.png" alt="AF Logo" />
+            <img className="w-8 h-8  rounded-lg flex items-center justify-center" src="/favicon.png" alt="AF Logo" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">AutoFlow </h1>

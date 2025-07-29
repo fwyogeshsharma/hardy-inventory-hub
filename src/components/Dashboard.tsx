@@ -553,7 +553,7 @@ export const Dashboard = () => {
         title="Add New SKU"
         maxWidth="max-w-5xl"
       >
-        <AddSKUDrawer onClose={() => handleFormSubmit('addSKU')} />
+        <AddSKUDrawer onSKUAdded={() => handleFormSubmit('addSKU')}/>
       </FormModal>
 
       <FormModal

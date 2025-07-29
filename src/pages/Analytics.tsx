@@ -304,7 +304,7 @@ export default function Analytics() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-              Revenue Trends
+              Operational Trends
             </CardTitle>
           </CardHeader>
           <CardContent>
