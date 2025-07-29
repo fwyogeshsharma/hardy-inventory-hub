@@ -12,7 +12,7 @@ export const Header = () => {
             <span className="text-primary-foreground font-bold text-sm">H</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Hardy IMS</h1>
+            <h1 className="text-xl font-bold text-foreground">Hardy Inventory Hub</h1>
             <p className="text-xs text-muted-foreground">Inventory Management System</p>
           </div>
         </div>
@@ -22,7 +22,7 @@ export const Header = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
-            placeholder="Search SKUs, materials..." 
+            placeholder="Search by name, tag, SKU..." 
             className="pl-10 w-64" 
           />
         </div>

@@ -33,21 +33,49 @@ import {
   Warehouse
 } from "lucide-react";
 import { dataService } from "@/lib/database";
-import { initializeAutoPartsData } from "@/lib/initializeAutoPartsData";
+import { initializeData } from "@/lib/initializeData";
+import { skuStorage } from "@/lib/localStorage";
 import { useState, useEffect } from "react";
+import { FormModal } from "./forms/FormModal";
+import { ProductionOrderForm } from "./forms/ProductionOrderForm";
+import { CustomerOrderForm } from "./forms/CustomerOrderForm";
+import { VendorForm } from "./forms/VendorForm";
+import { AddSKUDrawer } from "./AddSKUDrawer";
 
 export const Dashboard = () => {
   const [skus, setSKUs] = useState<any[]>([]);
+  const [modals, setModals] = useState({
+    addSKU: false,
+    startProduction: false,
+    createOrder: false,
+    manageVendors: false,
+    viewReports: false,
+    viewAlerts: false
+  });
   
   useEffect(() => {
     setSKUs(skuStorage.getAll());
   }, []);
 
+  const openModal = (modalName: keyof typeof modals) => {
+    setModals(prev => ({ ...prev, [modalName]: true }));
+  };
+
+  const closeModal = (modalName: keyof typeof modals) => {
+    setModals(prev => ({ ...prev, [modalName]: false }));
+  };
+
+  const handleFormSubmit = (modalName: keyof typeof modals) => {
+    closeModal(modalName);
+    // Refresh SKU data if needed
+    setSKUs(skuStorage.getAll());
+  };
+
   // Calculate real metrics from SKU data
   const calculateMetrics = () => {
     const totalSKUs = skus.length;
     const activeSKUs = skus.filter(sku => sku.status === 'active').length;
-    const upcomingSKUs = skus.filter(sku => sku.status === 'upcoming').length;
+
     const discontinuedSKUs = skus.filter(sku => sku.status === 'discontinued').length;
     
     // Mock additional data based on real SKUs
@@ -58,7 +86,7 @@ export const Dashboard = () => {
     return {
       totalSKUs,
       activeSKUs,
-      upcomingSKUs,
+      // upcomingSKUs,
       discontinuedSKUs,
       lowStockItems,
       activeOrders,
@@ -72,53 +100,85 @@ export const Dashboard = () => {
     { 
       id: 1, 
       type: "Stock Alert", 
-      message: "HTWO Lime 330ml running low - 45 units remaining", 
+      message: "Brake pads for Toyota Camry running low - 22 units remaining",
       priority: "high", 
-      time: "2 hours ago",
+      time: "30 minutes ago",
       icon: Package,
       color: "text-red-500"
     },
     { 
       id: 2, 
       type: "Production", 
-      message: "Skhy Berry 500ml batch completed successfully", 
+      message: "Alternator assembly for Honda Civic batch completed", 
       priority: "low", 
-      time: "4 hours ago",
+      time: "2 hours ago",
       icon: Factory,
       color: "text-green-500"
     },
     { 
       id: 3, 
       type: "Order", 
-      message: "Large order from NYC Distributor received", 
+      message: "Bulk order from AutoZone received", 
       priority: "medium", 
-      time: "6 hours ago",
+      time: "4 hours ago",
       icon: ShoppingCart,
       color: "text-blue-500"
     },
     { 
       id: 4, 
       type: "Vendor", 
-      message: "Premium Materials Co. confirmed delivery", 
+      message: "Shipment from Denso Parts confirmed", 
       priority: "low", 
-      time: "8 hours ago",
+      time: "6 hours ago",
       icon: Truck,
       color: "text-gray-500"
     }
   ];
 
   const recentActivities = [
-    { id: 1, user: "Production Team", action: "completed batch #B2024-089", time: "1 hour ago", avatar: "PT" },
-    { id: 2, user: "Sarah Chen", action: "updated SKU pricing for Rallie products", time: "3 hours ago", avatar: "SC" },
-    { id: 3, user: "Warehouse Staff", action: "received shipment from Vendor-002", time: "5 hours ago", avatar: "WS" },
-    { id: 4, user: "John Anderson", action: "created new production order", time: "1 day ago", avatar: "JA" }
+    { id: 1, user: "QA Team", action: "approved alternator batch #A2024-101", time: "45 minutes ago", avatar: "QA" },
+    { id: 2, user: "Alex Garcia", action: "updated pricing for Bosch spark plugs", time: "2 hours ago", avatar: "AG" },
+    { id: 3, user: "Receiving Dept", action: "unloaded shipment from Magna International", time: "3 hours ago", avatar: "RD" },
+    { id: 4, user: "System Bot", action: "generated low stock report for filters", time: "5 hours ago", avatar: "SB" }
   ];
 
-  const topPerformingSKUs = skus.slice(0, 5).map((sku, index) => ({
-    ...sku,
-    revenue: 25000 - (index * 3000),
-    growth: 15 - (index * 2)
-  }));
+  const topPerformingSKUs = [
+    {
+      id: 1,
+      skuName: "ACDelco Professional Brake Pads",
+      brand: "ACDelco",
+      revenue: 28500,
+      growth: 18.5
+    },
+    {
+      id: 2,
+      skuName: "Bosch Premium Oil Filter",
+      brand: "Bosch",
+      revenue: 24200,
+      growth: 15.2
+    },
+    {
+      id: 3,
+      skuName: "NGK Iridium Spark Plugs",
+      brand: "NGK",
+      revenue: 22800,
+      growth: 12.8
+    },
+    {
+      id: 4,
+      skuName: "Monroe Quick-Strut Assembly",
+      brand: "Monroe",
+      revenue: 19400,
+      growth: 9.7
+    },
+    {
+      id: 5,
+      skuName: "Mobil 1 Synthetic Motor Oil",
+      brand: "Mobil 1",
+      revenue: 17600,
+      growth: 8.3
+    }
+  ];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -146,10 +206,10 @@ export const Dashboard = () => {
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back, Manager
+            Welcome back
           </h1>
           <p className="text-lg text-muted-foreground">
-            Here's what's happening with your auto parts inventory today
+            Here's what's happening with your inventory today
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -173,7 +233,7 @@ export const Dashboard = () => {
         <MetricCard
           title="Total SKUs"
           value={metrics.totalSKUs.toString()}
-          description={`${metrics.activeSKUs} active auto parts`}
+          description={`${metrics.activeSKUs} active items`}
           icon={Package}
           trend="up"
           trendValue="+12%"
@@ -333,7 +393,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <Badge className={getPriorityColor(alert.priority)} size="sm">
+                    <Badge className={getPriorityColor(alert.priority)}>
                       {alert.type}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{alert.time}</span>
@@ -430,6 +490,7 @@ export const Dashboard = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Button 
+              onClick={() => openModal('addSKU')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -438,6 +499,7 @@ export const Dashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => openModal('startProduction')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -446,6 +508,7 @@ export const Dashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => openModal('createOrder')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-purple-200 hover:border-purple-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -454,6 +517,7 @@ export const Dashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => openModal('manageVendors')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-indigo-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -462,6 +526,7 @@ export const Dashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => openModal('viewReports')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-orange-200 hover:border-orange-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -470,6 +535,7 @@ export const Dashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => openModal('viewAlerts')}
               variant="outline" 
               className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-red-200 hover:border-red-300 transition-all duration-200 hover:shadow-md group"
             >
@@ -479,6 +545,109 @@ export const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <FormModal
+        isOpen={modals.addSKU}
+        onClose={() => closeModal('addSKU')}
+        title="Add New SKU"
+        maxWidth="max-w-5xl"
+      >
+        <AddSKUDrawer onClose={() => handleFormSubmit('addSKU')} />
+      </FormModal>
+
+      <FormModal
+        isOpen={modals.startProduction}
+        onClose={() => closeModal('startProduction')}
+        title="Create Production Order"
+        maxWidth="max-w-6xl"
+      >
+        <ProductionOrderForm 
+          onSubmit={() => handleFormSubmit('startProduction')}
+          onCancel={() => closeModal('startProduction')}
+        />
+      </FormModal>
+
+      <FormModal
+        isOpen={modals.createOrder}
+        onClose={() => closeModal('createOrder')}
+        title="Create Customer Order"
+        maxWidth="max-w-7xl"
+      >
+        <CustomerOrderForm 
+          onSubmit={() => handleFormSubmit('createOrder')}
+          onCancel={() => closeModal('createOrder')}
+        />
+      </FormModal>
+
+      <FormModal
+        isOpen={modals.manageVendors}
+        onClose={() => closeModal('manageVendors')}
+        title="Add New Vendor"
+        maxWidth="max-w-6xl"
+      >
+        <VendorForm 
+          onSubmit={() => handleFormSubmit('manageVendors')}
+          onCancel={() => closeModal('manageVendors')}
+        />
+      </FormModal>
+
+      <FormModal
+        isOpen={modals.viewReports}
+        onClose={() => closeModal('viewReports')}
+        title="Reports & Analytics"
+        maxWidth="max-w-4xl"
+      >
+        <div className="p-6 text-center">
+          <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-xl font-semibold mb-2">Reports Dashboard</h3>
+          <p className="text-muted-foreground mb-4">
+            Navigate to the Reports section to access detailed analytics and business intelligence reports.
+          </p>
+          <Button 
+            onClick={() => closeModal('viewReports')}
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+          >
+            Go to Reports
+          </Button>
+        </div>
+      </FormModal>
+
+      <FormModal
+        isOpen={modals.viewAlerts}
+        onClose={() => closeModal('viewAlerts')}
+        title="System Alerts"
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-4">
+          {recentAlerts.map((alert) => (
+            <div key={alert.id} className="p-4 border border-gray-200 rounded-lg bg-white/60">
+              <div className="flex items-start space-x-3">
+                <div className={`p-2 rounded-full bg-white/80 ${alert.color}`}>
+                  <alert.icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Badge className={getPriorityColor(alert.priority)}>
+                      {alert.type}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">{alert.time}</span>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">{alert.message}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="text-center pt-4">
+            <Button 
+              variant="outline"
+              onClick={() => closeModal('viewAlerts')}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </FormModal>
     </div>
   );
 };

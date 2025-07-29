@@ -139,12 +139,12 @@ const EnhancedHeader = () => {
           {/* User Profile */}
           <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-900">Production Manager</p>
-              <p className="text-xs text-gray-600">manager@hardy.com</p>
+              <p className="text-sm font-medium text-gray-900">Product Owner-CSR</p>
+              <p className="text-xs text-gray-600">yogeshsharma@faberwork.com</p>
             </div>
             <Avatar className="h-8 w-8 ring-2 ring-blue-100">
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
-                PM
+                YS
               </AvatarFallback>
             </Avatar>
           </div>

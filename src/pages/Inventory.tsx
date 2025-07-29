@@ -2,15 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2 } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2, Trash2 } from "lucide-react";
 import { dataService, SKU, Inventory as InventoryRecord } from "@/lib/database";
 import { AddSKUDrawer } from "@/components/AddSKUDrawer";
+import { FormModal } from "@/components/forms/FormModal";
 import { initializeAutoPartsData } from "@/lib/initializeAutoPartsData";
 
 export default function Inventory() {
   const [skus, setSKUs] = useState<SKU[]>([]);
   const [inventory, setInventory] = useState<InventoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -45,6 +47,31 @@ export default function Inventory() {
     setSKUs(prev => [...prev, newSKU]);
     // Reload inventory data to get the new SKU's inventory record
     loadData();
+    setModalOpen(false);
+  };
+
+  const handleModalSKUAdded = () => {
+    setModalOpen(false);
+    loadData();
+  };
+
+  const handleClearAllData = async () => {
+    if (window.confirm('Are you sure you want to clear all inventory data? This action cannot be undone.')) {
+      try {
+        setLoading(true);
+        await dataService.clearAllData();
+        setSKUs([]);
+        setInventory([]);
+        // Reinitialize with fresh data
+        await dataService.initialize();
+        await loadData();
+      } catch (error) {
+        console.error('Error clearing data:', error);
+        alert('Failed to clear inventory data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   // Helper functions
@@ -144,7 +171,23 @@ export default function Inventory() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <AddSKUDrawer onSKUAdded={handleSKUAdded} />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100 backdrop-blur-sm"
+            onClick={handleClearAllData}
+            disabled={loading}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear All
+          </Button>
+          <Button 
+            onClick={() => setModalOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+          >
+            <Package className="h-4 w-4 mr-2" />
+            Add New SKU
+          </Button>
         </div>
       </div>
 
@@ -255,7 +298,13 @@ export default function Inventory() {
               <p className="text-gray-500 mb-6">
                 Add your first automotive part to get started with inventory management.
               </p>
-              <AddSKUDrawer onSKUAdded={handleSKUAdded} />
+              <Button 
+                onClick={() => setModalOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Add New SKU
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -292,7 +341,7 @@ export default function Inventory() {
                       </div>
                       <div className="ml-13">
                         <p className="text-sm text-gray-600">
-                          {sku.brand?.name} • {sku.flavor?.name} • {sku.pack_size?.name}
+                          {sku.brand?.name} • {sku.category?.name} • {sku.part_type?.name}
                         </p>
                         <p className="text-xs text-gray-500">Barcode: {sku.barcode || 'N/A'}</p>
                         <p className="text-xs text-gray-500">Launch Date: {sku.launch_date ? new Date(sku.launch_date).toLocaleDateString() : 'N/A'}</p>
@@ -336,6 +385,16 @@ export default function Inventory() {
           </CardContent>
         </Card>
       )}
+
+      {/* Add SKU Modal */}
+      <FormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Add New SKU"
+        maxWidth="max-w-5xl"
+      >
+        <AddSKUDrawer onSKUAdded={handleSKUAdded} />
+      </FormModal>
     </div>
   );
 }

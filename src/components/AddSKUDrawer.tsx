@@ -33,7 +33,7 @@ import { CalendarIcon, Plus, Trash2, Package, Sparkles, Target, Users, ChevronDo
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { dataService, Brand, Flavor, PackSize, SKU } from "@/lib/database";
+import {dataService, Brand, SKU, Category, PartType} from "@/lib/database";
 
 interface AddSKUDrawerProps {
   onSKUAdded: (sku: SKU) => void;
@@ -46,8 +46,8 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
   const [formData, setFormData] = useState({
     skuName: "",
     brandId: 0,
-    flavorId: 0,
-    packSizeId: 0,
+    categoryId: 0,
+    partTypeId: 0,
     skuType: "single" as "single" | "kit",
     status: "active" as "active" | "upcoming" | "discontinued",
     barcode: "",
@@ -61,10 +61,10 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
   // Database-driven dropdown data
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [flavors, setFlavors] = useState<Flavor[]>([]);
-  const [packSizes, setPackSizes] = useState<PackSize[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [partTypes, setPartTypes] = useState<PartType[]>([]);
   const [availableSKUs, setAvailableSKUs] = useState<SKU[]>([]);
-  const unitOfMeasures = ["Each", "Set", "Pair", "Kit", "Case", "Liter", "Gallon", "Pound", "Kilogram"];
+  const unitOfMeasures = ["Each", "Set", "Pair", "Kit", "Box", "Piece", "Assembly", "Unit"];
   const statuses = ["active", "upcoming", "discontinued"];
 
   // Load dropdown data on component mount
@@ -80,16 +80,17 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
   const loadDropdownData = async () => {
     try {
-      const [brandsData, flavorsData, packSizesData, skusData] = await Promise.all([
+      // Load data from database service
+      const [brandsData, categoriesData, partTypesData, skusData] = await Promise.all([
         dataService.getBrands(),
-        dataService.getFlavors(),
-        dataService.getPackSizes(),
-        dataService.getSKUs()
+        dataService.getCategories(),
+        dataService.getPartTypes(),
+        dataService.getSKUs(),
       ]);
-      
+
       setBrands(brandsData.filter(b => b.is_active));
-      setFlavors(flavorsData.filter(f => f.is_active));
-      setPackSizes(packSizesData.filter(ps => ps.is_active));
+      setCategories(categoriesData.filter(c => c.is_active));
+      setPartTypes(partTypesData.filter(pt => pt.is_active));
       setAvailableSKUs(skusData.filter(s => s.sku_type === 'single' && s.status === 'active'));
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -108,20 +109,20 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.skuName.trim()) newErrors.skuName = "SKU Name is required";
     if (!formData.brandId || formData.brandId === 0) newErrors.brandId = "Brand is required";
-    if (!formData.flavorId || formData.flavorId === 0) newErrors.flavorId = "Flavor is required";
-    if (!formData.packSizeId || formData.packSizeId === 0) newErrors.packSizeId = "Pack Size is required";
+    if (!formData.categoryId || formData.categoryId === 0) newErrors.categoryId = "Category is required";
+    if (!formData.partTypeId || formData.partTypeId === 0) newErrors.partTypeId = "Part Type is required";
     if (!formData.status) newErrors.status = "Status is required";
     if (!formData.barcode.trim()) newErrors.barcode = "Barcode is required";
     if (!formData.unitOfMeasure) newErrors.unitOfMeasure = "Unit of Measure is required";
     if (!formData.launchDate) newErrors.launchDate = "Launch Date is required";
-    
+
     if (formData.skuType === 'kit' && componentSKUs.length === 0) {
       newErrors.componentSKUs = "Kit SKUs must have at least one component";
     }
-    
+
     // Validate kit components
     if (formData.skuType === 'kit') {
       componentSKUs.forEach((comp, index) => {
@@ -133,7 +134,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
         }
       });
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -153,8 +154,8 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       const newSKU = await dataService.createSKU({
         sku_name: formData.skuName,
         brand_id: formData.brandId,
-        flavor_id: formData.flavorId,
-        pack_size_id: formData.packSizeId,
+        category_id: formData.categoryId,
+        part_type_id: formData.partTypeId,
         sku_type: formData.skuType,
         status: formData.status,
         barcode: formData.barcode,
@@ -166,13 +167,13 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
       onSKUAdded(newSKU);
       setOpen(false);
-      
+
       // Reset form
       setFormData({
         skuName: "",
         brandId: 0,
-        flavorId: 0,
-        packSizeId: 0,
+        categoryId: 0,
+        partTypeId: 0,
         skuType: "single",
         status: "active",
         barcode: "",
@@ -240,14 +241,14 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
               Add a new automotive part to your inventory management system
             </DrawerDescription>
           </DrawerHeader>
-          
+
           <div className="px-6 space-y-6 overflow-y-auto max-h-[60vh]">
             {/* Basic Product Information */}
             <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
                   <Sparkles className="h-5 w-5 mr-2 text-blue-500" />
-                  Basic Part Information
+                  Basic Product Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -259,7 +260,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                       id="skuName"
                       value={formData.skuName}
                       onChange={(e) => setFormData(prev => ({ ...prev, skuName: e.target.value }))}
-                      placeholder="e.g., ACDelco Brake Pads Set"
+                      placeholder="e.g., ACDelco Brake Pads"
                       className={cn(
                         "bg-white/80 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all",
                         errors.skuName ? "border-red-500 focus:border-red-500" : ""
@@ -276,7 +277,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                         "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11 text-left",
                         errors.brandId ? "border-red-500" : ""
                       )}>
-                        <SelectValue placeholder="Select manufacturer...">
+                        <SelectValue placeholder="Select brand...">
                           {formData.brandId > 0 && (
                             <div className="flex items-center">
                               <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center mr-2">
@@ -290,7 +291,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                         </SelectValue>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[200px]">
+                      <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg">
                         <div className="p-2">
                           <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Brands</div>
                           {brands.map((brand) => (
@@ -317,38 +318,38 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                   {/* Category */}
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold text-gray-700">Category *</Label>
-                    <Select value={formData.flavorId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, flavorId: parseInt(value) }))}>
+                    <Select value={formData.categoryId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: parseInt(value) }))}>
                       <SelectTrigger className={cn(
                         "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11",
-                        errors.flavorId ? "border-red-500" : ""
+                        errors.categoryId ? "border-red-500" : ""
                       )}>
                         <SelectValue placeholder="Select category...">
-                          {formData.flavorId > 0 && (
+                          {formData.categoryId > 0 && (
                             <div className="flex items-center">
                               <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center mr-2">
                                 <span className="text-white text-xs font-bold">
-                                  {flavors.find(f => f.id === formData.flavorId)?.name.charAt(0)}
+                                  {categories.find(c => c.id === formData.categoryId)?.name.charAt(0)}
                                 </span>
                               </div>
-                              <span className="font-medium">{flavors.find(f => f.id === formData.flavorId)?.name}</span>
+                              <span className="font-medium">{categories.find(c => c.id === formData.categoryId)?.name}</span>
                             </div>
                           )}
                         </SelectValue>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[200px]">
+                      <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg">
                         <div className="p-2">
                           <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Categories</div>
-                          {flavors.map((flavor) => (
-                            <SelectItem key={flavor.id} value={flavor.id.toString()} className="h-10 cursor-pointer">
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()} className="h-10 cursor-pointer">
                               <div className="flex items-center space-x-3">
                                 <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">{flavor.name.charAt(0)}</span>
+                                  <span className="text-white text-xs font-bold">{category.name.charAt(0)}</span>
                                 </div>
                                 <div>
-                                  <div className="font-medium text-gray-900">{flavor.name}</div>
-                                  {flavor.description && (
-                                    <div className="text-xs text-gray-500">{flavor.description}</div>
+                                  <div className="font-medium text-gray-900">{category.name}</div>
+                                  {category.description && (
+                                    <div className="text-xs text-gray-500">{category.description}</div>
                                   )}
                                 </div>
                               </div>
@@ -357,50 +358,44 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                         </div>
                       </SelectContent>
                     </Select>
-                    {errors.flavorId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.flavorId}</p>}
+                    {errors.categoryId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.categoryId}</p>}
                   </div>
 
-                  {/* Package Type */}
+                  {/* Part Type */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-gray-700">Package Type *</Label>
-                    <Select value={formData.packSizeId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, packSizeId: parseInt(value) }))}>
+                    <Label className="text-sm font-semibold text-gray-700">Part Type *</Label>
+                    <Select value={formData.partTypeId.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, partTypeId: parseInt(value) }))}>
                       <SelectTrigger className={cn(
                         "bg-white/80 border-gray-200 focus:border-blue-500 transition-all h-11",
-                        errors.packSizeId ? "border-red-500" : ""
+                        errors.partTypeId ? "border-red-500" : ""
                       )}>
-                        <SelectValue placeholder="Select package type...">
-                          {formData.packSizeId > 0 && (
+                        <SelectValue placeholder="Select part type...">
+                          {formData.partTypeId > 0 && (
                             <div className="flex items-center">
                               <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center mr-2">
                                 <Package className="h-3 w-3 text-white" />
                               </div>
-                              <span className="font-medium">{packSizes.find(ps => ps.id === formData.packSizeId)?.name}</span>
-                              {packSizes.find(ps => ps.id === formData.packSizeId)?.volume_ml && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  ({packSizes.find(ps => ps.id === formData.packSizeId)?.volume_ml}ml)
-                                </span>
-                              )}
+                              <span className="font-medium">{partTypes.find(pt => pt.id === formData.partTypeId)?.name}</span>
                             </div>
                           )}
                         </SelectValue>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[200px]">
+                      <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg">
                         <div className="p-2">
-                          <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Pack Sizes</div>
-                          {packSizes.map((packSize) => (
-                            <SelectItem key={packSize.id} value={packSize.id.toString()} className="h-12 cursor-pointer">
+                          <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available Part Types</div>
+                          {partTypes.map((partType) => (
+                            <SelectItem key={partType.id} value={partType.id.toString()} className="h-12 cursor-pointer">
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center">
                                     <Package className="h-4 w-4 text-white" />
                                   </div>
                                   <div>
-                                    <div className="font-medium text-gray-900">{packSize.name}</div>
-                                    <div className="text-xs text-gray-500">
-                                      {packSize.volume_ml && `${packSize.volume_ml}ml`}
-                                      {packSize.unit_count > 1 && ` • ${packSize.unit_count} units`}
-                                    </div>
+                                    <div className="font-medium text-gray-900">{partType.name}</div>
+                                    {partType.description && (
+                                      <div className="text-xs text-gray-500">{partType.description}</div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -409,7 +404,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                         </div>
                       </SelectContent>
                     </Select>
-                    {errors.packSizeId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.packSizeId}</p>}
+                    {errors.partTypeId && <p className="text-sm text-red-500 flex items-center"><Target className="h-3 w-3 mr-1" />{errors.partTypeId}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -460,11 +455,11 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                       )}>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border border-gray-200 shadow-lg">
                         {statuses.map((status) => (
                           <SelectItem key={status} value={status}>
                             <div className="flex items-center">
-                              <Badge 
+                              <Badge
                                 className={cn(
                                   "mr-2 text-xs",
                                   status === "active" ? "bg-green-100 text-green-700" :
@@ -509,9 +504,9 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                           errors.barcode ? "border-red-500" : ""
                         )}
                       />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         onClick={generateBarcode}
                         className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                       >
@@ -531,7 +526,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                       )}>
                         <SelectValue placeholder="Select unit" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border border-gray-200 shadow-lg">
                         {unitOfMeasures.map((unit) => (
                           <SelectItem key={unit} value={unit}>{unit}</SelectItem>
                         ))}
@@ -579,7 +574,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center text-lg">
                     <Users className="h-5 w-5 mr-2 text-orange-500" />
-                    Kit Components
+                    Component SKUs
                     <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700 border-orange-200">
                       {componentSKUs.length} components
                     </Badge>
@@ -608,7 +603,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                               </SelectValue>
                               <ChevronDown className="h-4 w-4 opacity-50" />
                             </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
+                            <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg">
                               <div className="p-2">
                                 <div className="text-xs font-medium text-gray-500 mb-2 px-2">Available SKUs</div>
                                 {availableSKUs.map((sku) => (
@@ -620,7 +615,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                                       <div>
                                         <div className="font-medium text-gray-900">{sku.sku_name}</div>
                                         <div className="text-xs text-gray-500">
-                                          {sku.brand?.name} • {sku.flavor?.name} • {sku.pack_size?.name}
+                                          {sku.brand?.name} • {sku.category?.name} • {sku.part_type?.name}
                                         </div>
                                       </div>
                                     </div>
