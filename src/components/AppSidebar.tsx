@@ -7,11 +7,13 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Gift,
   TrendingUp,
   Home,
   HelpCircle,
-  LogOut
+  LogOut,
+  Activity,
+  Truck,
+  ShoppingBag
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +32,14 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
+  { title: "Workflow Dashboard", url: "/workflow", icon: Activity },
   { title: "Inventory", url: "/inventory", icon: Package },
+  { title: "Purchase Orders", url: "/purchase-orders", icon: Truck },
+  { title: "Sales Orders", url: "/sales-orders", icon: ShoppingBag },
   { title: "Production", url: "/production", icon: Factory },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Warehouse", url: "/warehouse", icon: Warehouse },
   { title: "Vendors", url: "/vendors", icon: Users },
-  { title: "Promotions", url: "/promotions", icon: Gift },
   { title: "Reports", url: "/reports", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: TrendingUp },
 ];

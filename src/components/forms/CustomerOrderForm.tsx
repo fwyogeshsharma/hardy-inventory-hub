@@ -161,8 +161,8 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
   const getCustomerTypeColor = (type: string) => {
     switch (type) {
       case 'distributor': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'retailer': return 'bg-green-100 text-green-700 border-green-200';
-      case 'service_center': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'retailer': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'service_center': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
       case 'individual': return 'bg-orange-100 text-orange-700 border-orange-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -170,12 +170,12 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-0 shadow-lg">
+      <Card className="border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #e6f2fa 0%, #f8fafc 100%)'}}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center text-2xl">
-            <ShoppingCart className="h-7 w-7 mr-3 text-green-500" />
+            <ShoppingCart className="h-7 w-7 mr-3" style={{color: '#3997cd'}} />
             Create Customer Order
-            <Badge className="ml-3 bg-green-100 text-green-700 border-green-200">
+            <Badge className="ml-3 bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">
               New Order
             </Badge>
           </CardTitle>
@@ -222,13 +222,13 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                     </SelectItem>
                     <SelectItem value="retailer">
                       <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-700 border-green-200">Retailer</Badge>
+                        <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">Retailer</Badge>
                         <span>Retail store/chain</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="service_center">
                       <div className="flex items-center space-x-2">
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Service Center</Badge>
+                        <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">Service Center</Badge>
                         <span>Auto repair/service</span>
                       </div>
                     </SelectItem>
@@ -282,7 +282,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
           <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <Package className="h-5 w-5 mr-2 text-purple-500" />
+                <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Order Details
               </CardTitle>
             </CardHeader>
@@ -403,10 +403,10 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center">
-                <Package className="h-5 w-5 mr-2 text-green-500" />
+                <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Order Items
               </div>
-              <Button type="button" onClick={addOrderItem} size="sm" className="bg-green-500 hover:bg-green-600">
+              <Button type="button" onClick={addOrderItem} size="sm" className="text-white" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Item
               </Button>
@@ -469,7 +469,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                     />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="text-sm font-semibold text-green-600">
+                    <div className="text-sm font-semibold" style={{color: '#3997cd'}}>
                       ${calculateItemTotal(item).toFixed(2)}
                     </div>
                     {orderItems.length > 1 && (
@@ -554,7 +554,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg"
+                  className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
                 >
                   {isSubmitting ? (
                     <div className="flex items-center">

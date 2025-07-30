@@ -23,7 +23,7 @@ export const FormModal: React.FC<FormModalProps> = ({
       <DialogContent className={`${maxWidth} max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 border-0 shadow-2xl`}>
         <DialogHeader className="pb-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <DialogTitle className="text-2xl font-bold" style={{color: '#3997cd'}}>
               {title}
             </DialogTitle>
             <Button

@@ -41,6 +41,7 @@ import { ProductionOrderForm } from "./forms/ProductionOrderForm";
 import { CustomerOrderForm } from "./forms/CustomerOrderForm";
 import { VendorForm } from "./forms/VendorForm";
 import { AddSKUDrawer } from "./AddSKUDrawer";
+import { InitializeDataButton } from "./InitializeDataButton";
 
 export const Dashboard = () => {
   const [skus, setSKUs] = useState<any[]>([]);
@@ -55,6 +56,18 @@ export const Dashboard = () => {
   
   useEffect(() => {
     setSKUs(skuStorage.getAll());
+    
+    // Listen for real-time updates
+    const handleDashboardRefresh = () => {
+      console.log('📊 Dashboard refreshing with latest data...');
+      setSKUs(skuStorage.getAll());
+    };
+    
+    window.addEventListener('dashboard-refresh', handleDashboardRefresh);
+    
+    return () => {
+      window.removeEventListener('dashboard-refresh', handleDashboardRefresh);
+    };
   }, []);
 
   const openModal = (modalName: keyof typeof modals) => {
@@ -104,7 +117,7 @@ export const Dashboard = () => {
       priority: "high", 
       time: "30 minutes ago",
       icon: Package,
-      color: "text-red-500"
+      color: "text-[#3997cd]"
     },
     { 
       id: 2, 
@@ -113,7 +126,7 @@ export const Dashboard = () => {
       priority: "low", 
       time: "2 hours ago",
       icon: Factory,
-      color: "text-green-500"
+      color: "text-[#3997cd]"
     },
     { 
       id: 3, 
@@ -122,7 +135,7 @@ export const Dashboard = () => {
       priority: "medium", 
       time: "4 hours ago",
       icon: ShoppingCart,
-      color: "text-blue-500"
+      color: '#3997cd'
     },
     { 
       id: 4, 
@@ -131,7 +144,7 @@ export const Dashboard = () => {
       priority: "low", 
       time: "6 hours ago",
       icon: Truck,
-      color: "text-gray-500"
+      color: "text-[#3997cd]"
     }
   ];
 
@@ -183,11 +196,11 @@ export const Dashboard = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-500 text-white";
+        return "bg-[#3997cd] text-white";
       case "medium":
-        return "bg-yellow-500 text-white";
+        return "bg-[#3997cd] text-white";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-[#3997cd] text-white";
     }
   };
 
@@ -201,11 +214,11 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Welcome back
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -217,12 +230,27 @@ export const Dashboard = () => {
             <Calendar className="h-3 w-3 mr-1" />
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </Badge>
-          <Button variant="outline" size="sm" className="bg-white/50 backdrop-blur-sm">
-            <Download className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white/50 backdrop-blur-sm" 
+            style={{borderColor: '#3997cd', color: '#3997cd'}} 
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e6f2fa'} 
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.5)'}
+          >
+            <Download className="h-4 w-4 mr-2" style={{color: '#3997cd'}} />
             Export
           </Button>
-          <Button variant="outline" size="sm" className="bg-white/50 backdrop-blur-sm">
-            <Settings className="h-4 w-4 mr-2" />
+          <InitializeDataButton />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white/50 backdrop-blur-sm" 
+            style={{borderColor: '#3997cd', color: '#3997cd'}} 
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e6f2fa'} 
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.5)'}
+          >
+            <Settings className="h-4 w-4 mr-2" style={{color: '#3997cd'}} />
             Settings
           </Button>
         </div>
@@ -238,7 +266,7 @@ export const Dashboard = () => {
           trend="up"
           trendValue="+12%"
           variant="default"
-          className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg"
+          className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
           title="Low Stock Alerts"
@@ -248,7 +276,7 @@ export const Dashboard = () => {
           trend="down"
           trendValue="-8%"
           variant="warning"
-          className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0 shadow-lg"
+          className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
           title="Active Orders"
@@ -258,7 +286,7 @@ export const Dashboard = () => {
           trend="up"
           trendValue="+23%"
           variant="default"
-          className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg"
+          className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
           title="Production Runs"
@@ -268,7 +296,7 @@ export const Dashboard = () => {
           trend="stable"
           trendValue="+5%"
           variant="default"
-          className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg"
+          className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
       </div>
 
@@ -279,9 +307,9 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                <p className="text-2xl font-bold text-green-600">$847K</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>$847K</p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500" />
+              <DollarSign className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <Progress value={75} className="h-2" />
@@ -295,9 +323,9 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Efficiency</p>
-                <p className="text-2xl font-bold text-blue-600">94%</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>94%</p>
               </div>
-              <Zap className="h-8 w-8 text-blue-500" />
+              <Zap className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <Progress value={94} className="h-2" />
@@ -311,9 +339,9 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">On-Time</p>
-                <p className="text-2xl font-bold text-purple-600">98%</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>98%</p>
               </div>
-              <Target className="h-8 w-8 text-purple-500" />
+              <Target className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <Progress value={98} className="h-2" />
@@ -327,13 +355,13 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Vendors</p>
-                <p className="text-2xl font-bold text-indigo-600">24</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>24</p>
               </div>
-              <Users className="h-8 w-8 text-indigo-500" />
+              <Users className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <div className="flex items-center space-x-1">
-                <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                <Star className="h-3 w-3 fill-current" style={{color: '#3997cd'}} />
                 <span className="text-xs text-muted-foreground">4.8 avg rating</span>
               </div>
             </div>
@@ -345,9 +373,9 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Warehouses</p>
-                <p className="text-2xl font-bold text-cyan-600">3</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>3</p>
               </div>
-              <Warehouse className="h-8 w-8 text-cyan-500" />
+              <Warehouse className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <p className="text-xs text-muted-foreground">92% capacity utilized</p>
@@ -360,9 +388,9 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Alerts</p>
-                <p className="text-2xl font-bold text-red-600">{recentAlerts.length}</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>{recentAlerts.length}</p>
               </div>
-              <Bell className="h-8 w-8 text-red-500" />
+              <Bell className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
             <div className="mt-2">
               <p className="text-xs text-muted-foreground">1 high priority</p>
@@ -377,7 +405,7 @@ export const Dashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-orange-500" />
+                <AlertTriangle className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Recent Alerts
               </div>
               <Badge variant="outline" className="text-xs">
@@ -414,7 +442,7 @@ export const Dashboard = () => {
         <Card className="lg:col-span-1 bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-500" />
+              <Activity className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
               Recent Activity
             </CardTitle>
           </CardHeader>
@@ -422,7 +450,7 @@ export const Dashboard = () => {
             {recentActivities.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg bg-white/40 hover:bg-white/60 transition-colors">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                  <AvatarFallback className="text-xs text-white" style={{backgroundColor: '#3997cd'}}>
                     {activity.avatar}
                   </AvatarFallback>
                 </Avatar>
@@ -446,7 +474,7 @@ export const Dashboard = () => {
         <Card className="lg:col-span-1 bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2 text-green-500" />
+              <BarChart3 className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
               Top Performing SKUs
             </CardTitle>
           </CardHeader>
@@ -454,7 +482,7 @@ export const Dashboard = () => {
             {topPerformingSKUs.map((sku, index) => (
               <div key={sku.id} className="flex items-center justify-between p-3 rounded-lg bg-white/40 hover:bg-white/60 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{backgroundColor: '#3997cd'}}>
                     {index + 1}
                   </div>
                   <div>
@@ -463,8 +491,8 @@ export const Dashboard = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-sm text-green-600">{formatCurrency(sku.revenue)}</p>
-                  <div className="flex items-center text-xs text-green-600">
+                  <p className="font-bold text-sm" style={{color: '#3997cd'}}>{formatCurrency(sku.revenue)}</p>
+                  <div className="flex items-center text-xs" style={{color: '#3997cd'}}>
                     <TrendingUp className="h-3 w-3 mr-1" />
                     +{sku.growth}%
                   </div>
@@ -483,7 +511,7 @@ export const Dashboard = () => {
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center">
-            <Zap className="h-5 w-5 mr-2 text-purple-500" />
+            <Zap className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
             Quick Actions
           </CardTitle>
         </CardHeader>
@@ -492,54 +520,54 @@ export const Dashboard = () => {
             <Button 
               onClick={() => openModal('addSKU')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <Package className="h-8 w-8 text-blue-500 group-hover:scale-110 transition-transform" />
+              <Package className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">Add SKU</span>
             </Button>
             
             <Button 
               onClick={() => openModal('startProduction')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <Factory className="h-8 w-8 text-green-500 group-hover:scale-110 transition-transform" />
+              <Factory className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">Start Production</span>
             </Button>
             
             <Button 
               onClick={() => openModal('createOrder')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-purple-200 hover:border-purple-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <ShoppingCart className="h-8 w-8 text-purple-500 group-hover:scale-110 transition-transform" />
+              <ShoppingCart className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">Create Order</span>
             </Button>
             
             <Button 
               onClick={() => openModal('manageVendors')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-indigo-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <Users className="h-8 w-8 text-indigo-500 group-hover:scale-110 transition-transform" />
+              <Users className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">Manage Vendors</span>
             </Button>
             
             <Button 
               onClick={() => openModal('viewReports')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-orange-200 hover:border-orange-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <BarChart3 className="h-8 w-8 text-orange-500 group-hover:scale-110 transition-transform" />
+              <BarChart3 className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">View Reports</span>
             </Button>
             
             <Button 
               onClick={() => openModal('viewAlerts')}
               variant="outline" 
-              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white border-red-200 hover:border-red-300 transition-all duration-200 hover:shadow-md group"
+              className="h-24 flex-col space-y-2 bg-white/80 hover:bg-white transition-all duration-200 hover:shadow-md group" style={{borderColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#3997cd'}
             >
-              <AlertTriangle className="h-8 w-8 text-red-500 group-hover:scale-110 transition-transform" />
+              <AlertTriangle className="h-8 w-8 group-hover:scale-110 transition-transform" style={{color: '#3997cd'}} />
               <span className="text-sm font-medium">View Alerts</span>
             </Button>
           </div>
@@ -606,7 +634,10 @@ export const Dashboard = () => {
           </p>
           <Button 
             onClick={() => closeModal('viewReports')}
-            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+            className="text-white" 
+            style={{backgroundColor: '#3997cd'}} 
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} 
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             Go to Reports
           </Button>

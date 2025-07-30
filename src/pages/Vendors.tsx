@@ -262,14 +262,14 @@ export default function Vendors() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">On-Time Delivery</p>
+                <p className="text-blue-100 text-sm font-medium">On-Time Delivery</p>
                 <p className="text-3xl font-bold">{getAverageDelivery()}%</p>
-                <p className="text-purple-100 text-xs mt-1">Average performance</p>
+                <p className="text-blue-100 text-xs mt-1">Average performance</p>
               </div>
-              <Truck className="h-10 w-10 text-purple-200" />
+              <Truck className="h-10 w-10 text-blue-200" />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-purple-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Above 90% target
               </div>

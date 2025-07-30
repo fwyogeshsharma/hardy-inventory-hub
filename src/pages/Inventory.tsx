@@ -141,11 +141,11 @@ export default function Inventory() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Auto Parts Inventory
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -183,7 +183,7 @@ export default function Inventory() {
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             <Package className="h-4 w-4 mr-2" />
             Add New SKU
@@ -193,7 +193,7 @@ export default function Inventory() {
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -203,7 +203,7 @@ export default function Inventory() {
                   Active auto parts
                 </p>
               </div>
-              <Package className="h-10 w-10 text-blue-200" />
+              <Package className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -277,7 +277,7 @@ export default function Inventory() {
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-12">
             <div className="text-center">
-              <Loader2 className="h-16 w-16 mx-auto mb-4 text-blue-500 animate-spin" />
+              <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin" style={{color: '#3997cd'}} />
               <h3 className="text-xl font-medium text-gray-600 mb-2">
                 Loading inventory...
               </h3>
@@ -300,7 +300,7 @@ export default function Inventory() {
               </p>
               <Button 
                 onClick={() => setModalOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
               >
                 <Package className="h-4 w-4 mr-2" />
                 Add New SKU
@@ -312,9 +312,9 @@ export default function Inventory() {
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader className="border-b border-gray-200/50">
             <CardTitle className="flex items-center text-xl">
-              <Package className="h-6 w-6 mr-3 text-blue-500" />
+              <Package className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
               Auto Parts Inventory
-              <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
+              <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
                 {skus.length} items
               </Badge>
             </CardTitle>
@@ -327,7 +327,7 @@ export default function Inventory() {
                   <div key={sku.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{backgroundColor: '#3997cd'}}>
                           <span className="text-white font-bold text-sm">{sku.brand?.name?.charAt(0) || 'S'}</span>
                         </div>
                         <div>

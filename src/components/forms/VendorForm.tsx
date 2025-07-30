@@ -130,8 +130,8 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
   const getVendorTypeColor = (type: string) => {
     switch (type) {
       case 'manufacturer': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'distributor': return 'bg-green-100 text-green-700 border-green-200';
-      case 'service_provider': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'distributor': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'service_provider': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
@@ -149,12 +149,12 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-0 shadow-lg">
+      <Card className="border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #e6f2fa 0%, #f8fafc 100%)'}}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center text-2xl">
-            <Building2 className="h-7 w-7 mr-3 text-purple-500" />
+            <Building2 className="h-7 w-7 mr-3" style={{color: '#3997cd'}} />
             Add New Vendor
-            <Badge className="ml-3 bg-purple-100 text-purple-700 border-purple-200">
+            <Badge className="ml-3 bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">
               New Vendor
             </Badge>
           </CardTitle>
@@ -201,13 +201,13 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                     </SelectItem>
                     <SelectItem value="distributor">
                       <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-100 text-green-700 border-green-200">Distributor</Badge>
+                        <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">Distributor</Badge>
                         <span>Parts distributor/wholesaler</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="service_provider">
                       <div className="flex items-center space-x-2">
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Service Provider</Badge>
+                        <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]">Service Provider</Badge>
                         <span>Service/support provider</span>
                       </div>
                     </SelectItem>
@@ -242,7 +242,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
           <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <User className="h-5 w-5 mr-2 text-green-500" />
+                <User className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Contact Information
               </CardTitle>
             </CardHeader>
@@ -566,7 +566,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                  className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
                 >
                   {isSubmitting ? (
                     <div className="flex items-center">

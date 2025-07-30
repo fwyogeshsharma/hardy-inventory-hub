@@ -34,6 +34,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {dataService, Brand, SKU, Category, PartType} from "@/lib/database";
+import { createSKUWithIntegration } from "./SKUIntegrationManager";
 
 interface AddSKUDrawerProps {
   onSKUAdded: (sku: SKU) => void;
@@ -151,7 +152,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
     setLoading(true);
     try {
-      const newSKU = await dataService.createSKU({
+      const newSKU = await createSKUWithIntegration({
         sku_name: formData.skuName,
         brand_id: formData.brandId,
         category_id: formData.categoryId,
@@ -185,8 +186,8 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
       setErrors({});
 
       toast({
-        title: "SKU Created Successfully",
-        description: `${newSKU.sku_name} (${newSKU.sku_code}) has been added to inventory.`,
+        title: "Part Added Successfully! 🎉",
+        description: `${newSKU.sku_name} (${newSKU.sku_code}) is now available across all modules - Inventory, Orders, and Production.`,
       });
     } catch (error) {
       console.error('Error creating SKU:', error);
@@ -221,7 +222,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
+        <Button className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}>
           <Plus className="h-4 w-4 mr-2" />
           Add New SKU
         </Button>
@@ -230,11 +231,11 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
         <div className="mx-auto w-full max-w-4xl">
           <DrawerHeader className="text-center pb-6">
             <div className="flex items-center justify-center mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{backgroundColor: '#3997cd'}}>
                 <Package className="h-6 w-6 text-white" />
               </div>
             </div>
-            <DrawerTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <DrawerTitle className="text-2xl font-bold" style={{color: '#3997cd'}}>
               Create New SKU
             </DrawerTitle>
             <DrawerDescription className="text-gray-600 text-lg">
@@ -247,7 +248,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
-                  <Sparkles className="h-5 w-5 mr-2 text-blue-500" />
+                  <Sparkles className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                   Basic Product Information
                 </CardTitle>
               </CardHeader>
@@ -414,7 +415,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
-                  <Target className="h-5 w-5 mr-2 text-purple-500" />
+                  <Target className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                   SKU Configuration
                 </CardTitle>
               </CardHeader>
@@ -484,7 +485,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
-                  <Package className="h-5 w-5 mr-2 text-green-500" />
+                  <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                   Product Details
                 </CardTitle>
               </CardHeader>
@@ -508,7 +509,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                         type="button"
                         variant="outline"
                         onClick={generateBarcode}
-                        className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                        className="hover:bg-blue-100" style={{backgroundColor: '#e6f2fa', borderColor: '#3997cd', color: '#3997cd'}}
                       >
                         Generate
                       </Button>
@@ -573,9 +574,9 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
               <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center text-lg">
-                    <Users className="h-5 w-5 mr-2 text-orange-500" />
+                    <Users className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                     Component SKUs
-                    <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700 border-orange-200">
+                    <Badge variant="outline" className="ml-2 text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
                       {componentSKUs.length} components
                     </Badge>
                   </CardTitle>
@@ -660,7 +661,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
                       type="button" 
                       variant="outline" 
                       onClick={addComponentSKU} 
-                      className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      className="w-full hover:bg-blue-100" style={{backgroundColor: '#e6f2fa', borderColor: '#3997cd', color: '#3997cd'}}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Component SKU
@@ -677,7 +678,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
               <Button 
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="flex-1 text-white shadow-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
                 size="lg"
               >
                 {loading ? (

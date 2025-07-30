@@ -107,10 +107,10 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-500 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
+      case 'urgent': return 'bg-[#3997cd] text-white';
+      case 'high': return 'bg-[#3997cd] text-white';
+      case 'medium': return 'bg-[#3997cd] text-white';
+      case 'low': return 'bg-[#3997cd] text-white';
       default: return 'bg-gray-500 text-white';
     }
   };
@@ -126,7 +126,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-0 shadow-lg">
+      <Card className="border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #e6f2fa 0%, #f8fafc 100%)'}}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center text-2xl">
             <Factory className="h-7 w-7 mr-3 text-blue-500" />
@@ -144,7 +144,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
           <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <Package className="h-5 w-5 mr-2 text-green-500" />
+                <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Product Information
               </CardTitle>
             </CardHeader>
@@ -178,7 +178,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                     <div><span className="text-blue-700 font-medium">Brand:</span> {selectedSKU.brand?.name || 'N/A'}</div>
                     <div><span className="text-blue-700 font-medium">Category:</span> {selectedSKU.category?.name || 'N/A'}</div>
                     <div><span className="text-blue-700 font-medium">Status:</span> 
-                      <Badge className={selectedSKU.status === 'active' ? 'bg-green-100 text-green-700 ml-1' : 'bg-orange-100 text-orange-700 ml-1'}>
+                      <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd] ml-1">
                         {selectedSKU.status}
                       </Badge>
                     </div>
@@ -212,7 +212,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   <SelectContent>
                     <SelectItem value="low">
                       <div className="flex items-center space-x-2">
-                        <Badge className="bg-green-500 text-white">Low</Badge>
+                        <Badge className="text-white" style={{backgroundColor: '#3997cd'}}>Low</Badge>
                         <span>Standard production</span>
                       </div>
                     </SelectItem>
@@ -244,7 +244,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
           <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <CalendarDays className="h-5 w-5 mr-2 text-purple-500" />
+                <CalendarDays className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
                 Schedule & Location
               </CardTitle>
             </CardHeader>
@@ -387,7 +387,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                  className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
                 >
                   {isSubmitting ? (
                     <div className="flex items-center">

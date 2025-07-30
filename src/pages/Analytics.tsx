@@ -339,7 +339,7 @@ export default function Analytics() {
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Gauge className="h-5 w-5 mr-2 text-purple-500" />
+              <Gauge className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
               Performance Score
             </CardTitle>
           </CardHeader>

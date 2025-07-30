@@ -304,14 +304,14 @@ export default function Promotions() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Total Revenue</p>
+                <p className="text-blue-100 text-sm font-medium">Total Revenue</p>
                 <p className="text-3xl font-bold">{formatCurrency(getTotalRevenue())}</p>
-                <p className="text-purple-100 text-xs mt-1">Generated from campaigns</p>
+                <p className="text-blue-100 text-xs mt-1">Generated from campaigns</p>
               </div>
-              <Award className="h-10 w-10 text-purple-200" />
+              <Award className="h-10 w-10 text-blue-200" />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-purple-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Zap className="h-4 w-4 mr-1" />
                 3.2x ROI average
               </div>
@@ -460,7 +460,7 @@ export default function Promotions() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-700">Customer Participation</span>
-                          <span className="text-sm font-bold text-purple-600">{participationRate}%</span>
+                          <span className="text-sm font-bold text-blue-600">{participationRate}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                           <div

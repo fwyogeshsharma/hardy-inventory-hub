@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { FormModal } from "@/components/forms/FormModal";
-import { ProductionOrderForm } from "@/components/forms/ProductionOrderForm";
+import { inventoryManager, dataService, SKU } from "@/lib/database";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Factory, 
   Play, 
@@ -26,111 +27,173 @@ import {
   Wrench
 } from "lucide-react";
 
+interface ProductionJobOrder {
+  id: number;
+  order_number: string;
+  sku_id: number;
+  warehouse_id: number;
+  quantity_planned: number;
+  quantity_completed: number;
+  quantity_scrapped: number;
+  status: 'scheduled' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  planned_start_date: string;
+  planned_completion_date: string;
+  actual_start_date?: string;
+  actual_completion_date?: string;
+  shift: 'day' | 'evening' | 'night';
+  supervisor?: string;
+  notes?: string;
+  material_requirements?: any[];
+  material_check_results?: any[];
+  created_at: string;
+  updated_at: string;
+  sku?: SKU;
+}
+
 export default function Production() {
+  const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [productionOrders, setProductionOrders] = useState<ProductionJobOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<ProductionJobOrder | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    loadProductionOrders();
+    
+    // Subscribe to real-time updates
+    inventoryManager.subscribe('production_job_order_created', handleProductionOrderUpdate);
+    inventoryManager.subscribe('production_job_order_started', handleProductionOrderUpdate);
+    inventoryManager.subscribe('production_job_order_completed', handleProductionOrderUpdate);
+    
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
+
+  const loadProductionOrders = async () => {
+    try {
+      setLoading(true);
+      const [orders, skus] = await Promise.all([
+        inventoryManager.getProductionJobOrders(),
+        dataService.getSKUs()
+      ]);
+      
+      // Enrich orders with SKU data
+      const enrichedOrders = orders.map((order: any) => ({
+        ...order,
+        sku: skus.find(s => s.id === order.sku_id)
+      }));
+      
+      setProductionOrders(enrichedOrders);
+    } catch (error) {
+      console.error('Error loading production orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load production orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProductionOrderUpdate = () => {
+    loadProductionOrders();
+  };
+
+  const handleStartOrder = async (orderId: number) => {
+    try {
+      await inventoryManager.startProductionJobOrder(orderId);
+      toast({
+        title: "Production Started",
+        description: "Production job order has been started",
+      });
+      loadProductionOrders();
+    } catch (error) {
+      console.error('Error starting production order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start production order",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteOrder = async (orderId: number, quantityCompleted: number) => {
+    try {
+      await inventoryManager.completeProductionJobOrder(orderId, {
+        quantity_completed: quantityCompleted,
+        notes: "Production completed successfully"
+      });
+      toast({
+        title: "Production Completed",
+        description: `Successfully completed ${quantityCompleted} units`,
+      });
+      loadProductionOrders();
+    } catch (error) {
+      console.error('Error completing production order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete production order",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleFormSubmit = () => {
     setModalOpen(false);
+    loadProductionOrders();
   };
 
-  const productionRuns = [
-    { 
-      id: 1, 
-      sku: "ACDelco-BRK-001", 
-      name: "Ceramic Brake Pads - Front Set", 
-      brand: "ACDelco",
-      category: "Brake System",
-      quantity: 5000, 
-      completed: 3500, 
-      status: "In Progress", 
-      startDate: "2024-01-15", 
-      estimatedCompletion: "2024-01-18",
-      priority: "High",
-      operator: "John Smith",
-      line: "Production Line A",
-      efficiency: 87,
-      defectRate: 0.5
-    },
-    { 
-      id: 2, 
-      sku: "Bosch-ENG-012", 
-      name: "Premium Motor Oil 5W-30 - 1Qt", 
-      brand: "Bosch",
-      category: "Fluids",
-      quantity: 2000, 
-      completed: 2000, 
-      status: "Completed", 
-      startDate: "2024-01-10", 
-      estimatedCompletion: "2024-01-12",
-      priority: "Medium",
-      operator: "Maria Garcia",
-      line: "Production Line B",
-      efficiency: 94,
-      defectRate: 0.2
-    },
-    { 
-      id: 3, 
-      sku: "NGK-IGN-008", 
-      name: "Iridium Spark Plugs - Set of 4", 
-      brand: "NGK",
-      category: "Electrical",
-      quantity: 3000, 
-      completed: 0, 
-      status: "Scheduled", 
-      startDate: "2024-01-20", 
-      estimatedCompletion: "2024-01-23",
-      priority: "Low",
-      operator: "David Chen",
-      line: "Production Line C",
-      efficiency: 0,
-      defectRate: 0
-    },
-    { 
-      id: 4, 
-      sku: "Monroe-SUS-015", 
-      name: "Premium Shock Absorbers - Pair", 
-      brand: "Monroe",
-      category: "Suspension",
-      quantity: 1500, 
-      completed: 450, 
-      status: "In Progress", 
-      startDate: "2024-01-16", 
-      estimatedCompletion: "2024-01-19",
-      priority: "High",
-      operator: "Sarah Johnson",
-      line: "Production Line A",
-      efficiency: 91,
-      defectRate: 0.3
-    }
-  ];
+  const filteredOrders = productionOrders.filter(order => {
+    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.sku?.sku_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.sku?.sku_code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return (
           <Badge className="bg-green-100 text-green-700 border-green-200 shadow-sm">
             <CheckCircle className="h-3 w-3 mr-1" />
             Completed
           </Badge>
         );
-      case "In Progress":
+      case "in_progress":
         return (
           <Badge className="bg-blue-100 text-blue-700 border-blue-200 shadow-sm">
             <Activity className="h-3 w-3 mr-1" />
             In Progress
           </Badge>
         );
-      case "Scheduled":
+      case "scheduled":
         return (
           <Badge className="bg-orange-100 text-orange-700 border-orange-200 shadow-sm">
             <Clock className="h-3 w-3 mr-1" />
             Scheduled
+          </Badge>
+        );
+      case "paused":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 shadow-sm">
+            <Pause className="h-3 w-3 mr-1" />
+            Paused
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-red-100 text-red-700 border-red-200 shadow-sm">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Cancelled
           </Badge>
         );
       default:
@@ -140,11 +203,13 @@ export default function Production() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "High":
-        return <Badge className="bg-red-100 text-red-700 border-red-200">High</Badge>;
-      case "Medium":
+      case "urgent":
+        return <Badge className="bg-red-100 text-red-700 border-red-200">Urgent</Badge>;
+      case "high":
+        return <Badge className="bg-orange-100 text-orange-700 border-orange-200">High</Badge>;
+      case "medium":
         return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Medium</Badge>;
-      case "Low":
+      case "low":
         return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Low</Badge>;
       default:
         return <Badge variant="outline">{priority}</Badge>;
@@ -155,20 +220,30 @@ export default function Production() {
     return Math.round((completed / total) * 100);
   };
 
-  const getActiveRuns = () => productionRuns.filter(run => run.status === "In Progress").length;
-  const getCompletedToday = () => productionRuns.filter(run => run.status === "Completed").reduce((sum, run) => sum + run.completed, 0);
-  const getScheduledRuns = () => productionRuns.filter(run => run.status === "Scheduled").length;
+  const getActiveRuns = () => productionOrders.filter(order => order.status === "in_progress").length;
+  const getCompletedToday = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return productionOrders
+      .filter(order => order.actual_completion_date === today)
+      .reduce((sum, order) => sum + order.quantity_completed, 0);
+  };
+  const getScheduledRuns = () => productionOrders.filter(order => order.status === "scheduled").length;
   const getAverageEfficiency = () => {
-    const activeRuns = productionRuns.filter(run => run.status === "In Progress" || run.status === "Completed");
-    return activeRuns.length > 0 ? Math.round(activeRuns.reduce((sum, run) => sum + run.efficiency, 0) / activeRuns.length) : 0;
+    const completedOrders = productionOrders.filter(order => order.status === "completed" && order.quantity_completed > 0);
+    if (completedOrders.length === 0) return 0;
+    const avgEfficiency = completedOrders.reduce((sum, order) => {
+      const efficiency = (order.quantity_completed / order.quantity_planned) * 100;
+      return sum + efficiency;
+    }, 0) / completedOrders.length;
+    return Math.round(avgEfficiency);
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Production Management
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -188,23 +263,29 @@ export default function Production() {
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button variant="outline" size="sm" className="bg-white/50 backdrop-blur-sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white/50 backdrop-blur-sm"
+            onClick={loadProductionOrders}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Production Run
+            New Production Order
           </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -214,7 +295,7 @@ export default function Production() {
                   Currently in progress
                 </p>
               </div>
-              <Activity className="h-10 w-10 text-blue-200" />
+              <Activity className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -225,18 +306,18 @@ export default function Production() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Completed Today</p>
+                <p className="text-blue-100 text-sm font-medium">Completed Today</p>
                 <p className="text-3xl font-bold">{getCompletedToday().toLocaleString()}</p>
-                <p className="text-green-100 text-xs mt-1">Units produced</p>
+                <p className="text-blue-100 text-xs mt-1">Units produced</p>
               </div>
-              <CheckCircle className="h-10 w-10 text-green-200" />
+              <CheckCircle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-green-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +12% vs target
               </div>
@@ -244,18 +325,18 @@ export default function Production() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Scheduled</p>
+                <p className="text-blue-100 text-sm font-medium">Scheduled</p>
                 <p className="text-3xl font-bold">{getScheduledRuns()}</p>
-                <p className="text-orange-100 text-xs mt-1">Upcoming runs</p>
+                <p className="text-blue-100 text-xs mt-1">Upcoming runs</p>
               </div>
-              <Timer className="h-10 w-10 text-orange-200" />
+              <Timer className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-orange-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Clock className="h-4 w-4 mr-1" />
                 Next: Tomorrow 8AM
               </div>
@@ -263,18 +344,18 @@ export default function Production() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Avg Efficiency</p>
+                <p className="text-blue-100 text-sm font-medium">Avg Efficiency</p>
                 <p className="text-3xl font-bold">{getAverageEfficiency()}%</p>
-                <p className="text-purple-100 text-xs mt-1">This week</p>
+                <p className="text-blue-100 text-xs mt-1">This week</p>
               </div>
-              <Target className="h-10 w-10 text-purple-200" />
+              <Target className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-purple-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Zap className="h-4 w-4 mr-1" />
                 Above 85% target
               </div>
@@ -283,49 +364,117 @@ export default function Production() {
         </Card>
       </div>
 
-      {/* Production Runs */}
+      {/* Filters and Search */}
+      <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by order number, SKU name, or SKU code..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white/80 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 bg-white/80 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="in_progress">In Progress</option>
+                <option value="paused">Paused</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Production Orders */}
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
-            <Factory className="h-6 w-6 mr-3 text-blue-500" />
-            Production Runs
-            <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
-              {productionRuns.length} runs
+            <Factory className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
+            Production Job Orders
+            <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
+              {filteredOrders.length} orders
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading production orders...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-8">
+              <Factory className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-xl font-medium text-gray-600 mb-2">No Production Orders</h3>
+              <p className="text-gray-500 mb-6">
+                {searchTerm || statusFilter !== "all" 
+                  ? "No orders match your current filters"
+                  : "Create your first production order to start manufacturing"}
+              </p>
+              <Button 
+                onClick={() => setModalOpen(true)}
+                className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Production Order
+              </Button>
+            </div>
+          ) : (
           <div className="space-y-6">
-            {productionRuns.map((run) => (
-              <div key={run.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+            {filteredOrders.map((order) => (
+              <div key={order.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">{run.brand.charAt(0)}</span>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{backgroundColor: '#3997cd'}}>
+                        <span className="text-white font-bold text-sm">{order.sku?.brand?.name?.charAt(0) || 'P'}</span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-lg">{run.name}</h3>
+                        <h3 className="font-semibold text-gray-900 text-lg">{order.order_number}</h3>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{run.sku}</Badge>
+                          <Badge variant="outline" className="text-xs">{order.sku?.sku_code}</Badge>
                           <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-500">{run.brand}</span>
-                          <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-500">{run.category}</span>
+                          <span className="text-xs text-gray-500">{order.sku?.sku_name}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {getStatusBadge(run.status)}
-                      {getPriorityBadge(run.priority)}
-                      {run.status === "In Progress" && (
-                        <Button size="sm" variant="outline" className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100">
-                          <Pause className="h-4 w-4" />
+                      {getStatusBadge(order.status)}
+                      {getPriorityBadge(order.priority)}
+                      {order.status === "in_progress" && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
+                          onClick={() => handleCompleteOrder(order.id, order.quantity_planned)}
+                        >
+                          <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
-                      {run.status === "Scheduled" && (
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                      {order.status === "scheduled" && (
+                        <Button 
+                          size="sm" 
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                          onClick={() => handleStartOrder(order.id)}
+                        >
                           <Play className="h-4 w-4" />
                         </Button>
                       )}
@@ -339,34 +488,34 @@ export default function Production() {
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <Package className="h-4 w-4 mr-1" />
-                        Total Quantity
+                        Planned Quantity
                       </div>
-                      <p className="text-lg font-semibold text-gray-900">{run.quantity.toLocaleString()} units</p>
+                      <p className="text-lg font-semibold text-gray-900">{order.quantity_planned.toLocaleString()} units</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Completed
                       </div>
-                      <p className="text-lg font-semibold text-green-600">{run.completed.toLocaleString()} units</p>
+                      <p className="text-lg font-semibold text-green-600">{order.quantity_completed.toLocaleString()} units</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <Wrench className="h-4 w-4 mr-1" />
-                        Operator
+                        Supervisor
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{run.operator}</p>
-                      <p className="text-xs text-gray-500">{run.line}</p>
+                      <p className="text-sm font-medium text-gray-900">{order.supervisor || 'Not assigned'}</p>
+                      <p className="text-xs text-gray-500">{order.shift.charAt(0).toUpperCase() + order.shift.slice(1)} shift</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <Target className="h-4 w-4 mr-1" />
-                        Performance
+                        Priority
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">{run.efficiency}% Efficiency</span>
-                        {run.defectRate > 0 && (
-                          <Badge className="bg-red-100 text-red-700 text-xs">{run.defectRate}% Defect</Badge>
+                        {getPriorityBadge(order.priority)}
+                        {order.quantity_scrapped > 0 && (
+                          <Badge className="bg-red-100 text-red-700 text-xs">{order.quantity_scrapped} Scrapped</Badge>
                         )}
                       </div>
                     </div>
@@ -377,49 +526,73 @@ export default function Production() {
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="h-4 w-4 mr-1" />
-                        Start Date
+                        Planned Start
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{new Date(run.startDate).toLocaleDateString('en-US', { 
+                      <p className="text-sm font-medium text-gray-900">{new Date(order.planned_start_date).toLocaleDateString('en-US', { 
                         weekday: 'short', 
                         year: 'numeric', 
                         month: 'short', 
                         day: 'numeric' 
                       })}</p>
+                      {order.actual_start_date && (
+                        <p className="text-xs text-green-600">Started: {new Date(order.actual_start_date).toLocaleDateString()}</p>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <Clock className="h-4 w-4 mr-1" />
                         Expected Completion
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{new Date(run.estimatedCompletion).toLocaleDateString('en-US', { 
+                      <p className="text-sm font-medium text-gray-900">{new Date(order.planned_completion_date).toLocaleDateString('en-US', { 
                         weekday: 'short', 
                         year: 'numeric', 
                         month: 'short', 
                         day: 'numeric' 
                       })}</p>
+                      {order.actual_completion_date && (
+                        <p className="text-xs text-green-600">Completed: {new Date(order.actual_completion_date).toLocaleDateString()}</p>
+                      )}
                     </div>
                   </div>
                   
                   {/* Progress Bar */}
-                  {(run.status === "In Progress" || run.status === "Completed") && (
+                  {(order.status === "in_progress" || order.status === "completed") && (
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Production Progress</span>
-                        <span className="text-sm font-bold text-blue-600">{getProgress(run.completed, run.quantity)}%</span>
+                        <span className="text-sm font-bold" style={{color: '#3997cd'}}>{getProgress(order.quantity_completed, order.quantity_planned)}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                         <div
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            run.status === "Completed" 
-                              ? "bg-gradient-to-r from-green-500 to-green-600" 
-                              : "bg-gradient-to-r from-blue-500 to-purple-600"
-                          }`}
-                          style={{ width: `${getProgress(run.completed, run.quantity)}%` }}
+                          className="h-3 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${getProgress(order.quantity_completed, order.quantity_planned)}%`,
+                            background: order.status === "completed" 
+                              ? 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'
+                              : 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'
+                          }}
                         ></div>
                       </div>
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>0</span>
-                        <span>{run.quantity.toLocaleString()} units</span>
+                        <span>{order.quantity_planned.toLocaleString()} units</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Material Requirements */}
+                  {order.material_check_results && order.material_check_results.length > 0 && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Material Requirements</h4>
+                      <div className="space-y-1">
+                        {order.material_check_results.map((material: any, index: number) => (
+                          <div key={index} className="flex justify-between text-xs">
+                            <span>Material {material.material_id}</span>
+                            <span className={material.sufficient ? 'text-green-600' : 'text-red-600'}>
+                              {material.available}/{material.required} {material.sufficient ? '✓' : '⚠️'}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -427,6 +600,7 @@ export default function Production() {
               </div>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -434,13 +608,21 @@ export default function Production() {
       <FormModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Create Production Order"
-        maxWidth="max-w-6xl"
+        title="Create Production Job Order"
+        maxWidth="max-w-4xl"
       >
-        <ProductionOrderForm 
-          onSubmit={handleFormSubmit}
-          onCancel={() => setModalOpen(false)}
-        />
+        <div className="text-center py-8">
+          <p className="text-gray-600">Production job order creation form would be implemented here.</p>
+          <p className="text-sm text-gray-500 mt-2">
+            This would include SKU selection, quantity planning, scheduling, and material requirements.
+          </p>
+          <Button 
+            onClick={handleFormSubmit}
+            className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          >
+            Close
+          </Button>
+        </div>
       </FormModal>
     </div>
   );

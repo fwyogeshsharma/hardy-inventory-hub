@@ -30,10 +30,14 @@ import Production from "./pages/Production";
 import Orders from "./pages/Orders";
 import Warehouse from "./pages/Warehouse";
 import Vendors from "./pages/Vendors";
-import Promotions from "./pages/Promotions";
 import Reports from "./pages/Reports";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import WorkflowDashboard from "./pages/WorkflowDashboard";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import SalesOrders from "./pages/SalesOrders";
+import { RealTimeNotifications } from "./components/RealTimeNotifications";
+import { SKUIntegrationManager } from "./components/SKUIntegrationManager";
 
 const queryClient = new QueryClient();
 
@@ -45,12 +49,14 @@ const EnhancedHeader = () => {
     const path = location.pathname;
     const titles = {
       '/': 'Dashboard',
+      '/workflow': 'Workflow Dashboard',
       '/inventory': 'Auto Parts Inventory',
+      '/purchase-orders': 'Purchase Orders',
+      '/sales-orders': 'Sales Orders',
       '/production': 'Parts Production', 
       '/orders': 'Order Management',
       '/warehouse': 'Warehouse Management',
       '/vendors': 'Supplier Management',
-      '/promotions': 'Promotions & Marketing',
       '/reports': 'Reports & Analytics',
       '/analytics': 'Business Analytics'
     };
@@ -61,12 +67,14 @@ const EnhancedHeader = () => {
     const path = location.pathname;
     const descriptions = {
       '/': 'Monitor your auto parts inventory operations and key metrics',
+      '/workflow': 'Real-time overview of your complete inventory management workflow',
       '/inventory': 'Track and manage all automotive parts, stock levels, and components',
+      '/purchase-orders': 'Manage purchase orders and inventory replenishment',
+      '/sales-orders': 'Manage customer orders and inventory allocation', 
       '/production': 'Monitor and manage parts production and manufacturing',
       '/orders': 'Track and manage customer orders and fulfillment',
       '/warehouse': 'Manage storage locations and distribution logistics',
       '/vendors': 'Manage supplier relationships and parts sourcing',
-      '/promotions': 'Create and manage marketing campaigns',
       '/reports': 'Generate and export comprehensive business reports',
       '/analytics': 'Analyze performance metrics and business trends'
     };
@@ -100,7 +108,7 @@ const EnhancedHeader = () => {
         {/* Right Section */}
         <div className="flex items-center space-x-3">
           {/* Date/Time Badge */}
-          <Badge variant="outline" className="hidden sm:flex bg-blue-50 text-blue-700 border-blue-200">
+          <Badge variant="outline" className="hidden sm:flex" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <Calendar className="h-3 w-3 mr-1" />
             {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </Badge>
@@ -117,15 +125,8 @@ const EnhancedHeader = () => {
             </Button>
           </div>
 
-          {/* Notification Bell */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-          </Button>
+          {/* Real-time Notifications */}
+          <RealTimeNotifications />
 
           {/* Settings */}
           <Button 
@@ -142,8 +143,8 @@ const EnhancedHeader = () => {
               <p className="text-sm font-medium text-gray-900">Product Owner-CSR</p>
               <p className="text-xs text-gray-600">yogeshsharma@faberwork.com</p>
             </div>
-            <Avatar className="h-8 w-8 ring-2 ring-blue-100">
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
+            <Avatar className="h-8 w-8 ring-2" style={{ringColor: '#e6f2fa'}}>
+              <AvatarFallback className="text-white text-sm font-semibold" style={{backgroundColor: '#3997cd'}}>
                 YS
               </AvatarFallback>
             </Avatar>
@@ -176,19 +177,23 @@ const App = () => (
             <AppSidebar />
             <div className="flex-1 flex flex-col">
               <EnhancedHeader />
-              <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+              <main className="flex-1 overflow-auto" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/workflow" element={<WorkflowDashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/purchase-orders" element={<PurchaseOrders />} />
+                  <Route path="/sales-orders" element={<SalesOrders />} />
                   <Route path="/production" element={<Production />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/warehouse" element={<Warehouse />} />
                   <Route path="/vendors" element={<Vendors />} />
-                  <Route path="/promotions" element={<Promotions />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                {/* Real-time SKU Integration Manager */}
+                <SKUIntegrationManager />
               </main>
             </div>
           </div>

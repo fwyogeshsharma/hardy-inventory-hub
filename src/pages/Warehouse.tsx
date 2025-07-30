@@ -171,7 +171,7 @@ export default function Warehouse() {
     switch (type) {
       case "Inbound":
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200 shadow-sm">
+          <Badge className="bg-green-100 text-blue-700 border-green-200 shadow-sm">
             <ArrowDownLeft className="h-3 w-3 mr-1" />
             Inbound
           </Badge>
@@ -185,14 +185,14 @@ export default function Warehouse() {
         );
       case "Transfer":
         return (
-          <Badge className="bg-orange-100 text-orange-700 border-orange-200 shadow-sm">
+          <Badge className="bg-orange-100 text-blue-700 border-orange-200 shadow-sm">
             <ArrowRightLeft className="h-3 w-3 mr-1" />
             Transfer
           </Badge>
         );
       case "Audit":
         return (
-          <Badge className="bg-purple-100 text-purple-700 border-purple-200 shadow-sm">
+          <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd] shadow-sm">
             <ClipboardCheck className="h-3 w-3 mr-1" />
             Audit
           </Badge>
@@ -219,14 +219,14 @@ export default function Warehouse() {
     switch (status) {
       case "Active":
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200">
+          <Badge className="bg-green-100 text-blue-700 border-green-200">
             <Activity className="h-3 w-3 mr-1" />
             Active
           </Badge>
         );
       case "Maintenance":
         return (
-          <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+          <Badge className="bg-orange-100 text-blue-700 border-orange-200">
             <AlertTriangle className="h-3 w-3 mr-1" />
             Maintenance
           </Badge>
@@ -242,8 +242,8 @@ export default function Warehouse() {
 
   const getUtilizationColor = (percentage: number) => {
     if (percentage >= 90) return "text-red-600";
-    if (percentage >= 75) return "text-orange-600";
-    return "text-green-600";
+    if (percentage >= 75) return "text-blue-600";
+    return "text-blue-600";
   };
 
   const getTotalCapacity = () => warehouseLocations.reduce((sum, wh) => sum + wh.capacity, 0);
@@ -321,14 +321,14 @@ export default function Warehouse() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Total Capacity</p>
+                <p className="text-blue-100 text-sm font-medium">Total Capacity</p>
                 <p className="text-3xl font-bold">{(getTotalCapacity() / 1000).toFixed(0)}K</p>
-                <p className="text-green-100 text-xs mt-1">Square feet available</p>
+                <p className="text-blue-100 text-xs mt-1">Square feet available</p>
               </div>
-              <Target className="h-10 w-10 text-green-200" />
+              <Target className="h-10 w-10 text-blue-200" />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-green-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Package className="h-4 w-4 mr-1" />
                 {getTotalZones()} storage zones
               </div>
@@ -340,14 +340,14 @@ export default function Warehouse() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Utilization</p>
+                <p className="text-blue-100 text-sm font-medium">Utilization</p>
                 <p className="text-3xl font-bold">{getUtilizationPercentage(getTotalOccupied(), getTotalCapacity())}%</p>
-                <p className="text-orange-100 text-xs mt-1">{(getTotalOccupied() / 1000).toFixed(1)}K sq ft occupied</p>
+                <p className="text-blue-100 text-xs mt-1">{(getTotalOccupied() / 1000).toFixed(1)}K sq ft occupied</p>
               </div>
-              <BarChart3 className="h-10 w-10 text-orange-200" />
+              <BarChart3 className="h-10 w-10 text-blue-200" />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-orange-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Activity className="h-4 w-4 mr-1" />
                 Optimal range: 70-85%
               </div>
@@ -359,14 +359,14 @@ export default function Warehouse() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Daily Movements</p>
+                <p className="text-blue-100 text-sm font-medium">Daily Movements</p>
                 <p className="text-3xl font-bold">{recentMovements.length * 45}</p>
-                <p className="text-purple-100 text-xs mt-1">Transactions today</p>
+                <p className="text-blue-100 text-xs mt-1">Transactions today</p>
               </div>
-              <Activity className="h-10 w-10 text-purple-200" />
+              <Activity className="h-10 w-10 text-blue-200" />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-purple-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +18% vs yesterday
               </div>
@@ -447,7 +447,7 @@ export default function Warehouse() {
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-500">Zones</p>
-                        <p className="text-lg font-semibold text-purple-600">{location.zones}</p>
+                        <p className="text-lg font-semibold text-blue-600">{location.zones}</p>
                         <p className="text-xs text-gray-500">storage</p>
                       </div>
                     </div>

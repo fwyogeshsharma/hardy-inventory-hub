@@ -4,7 +4,9 @@
       "Bash(npm install)",
       "Bash(sqlite3:*)",
       "Bash(dir)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
