@@ -131,28 +131,28 @@ export default function Orders() {
     switch (status) {
       case "Delivered":
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <CheckCircle className="h-3 w-3 mr-1" />
             Delivered
           </Badge>
         );
       case "Shipped":
         return (
-          <Badge className="bg-blue-100 text-blue-700 border-blue-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <Truck className="h-3 w-3 mr-1" />
             Shipped
           </Badge>
         );
       case "Processing":
         return (
-          <Badge className="bg-orange-100 text-orange-700 border-orange-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <Activity className="h-3 w-3 mr-1" />
             Processing
           </Badge>
         );
       case "Pending":
         return (
-          <Badge className="bg-gray-100 text-gray-700 border-gray-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </Badge>
@@ -167,9 +167,9 @@ export default function Orders() {
       case "High":
         return <Badge className="bg-red-100 text-red-700 border-red-200">High</Badge>;
       case "Medium":
-        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Medium</Badge>;
+        return <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>Medium</Badge>;
       case "Low":
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Low</Badge>;
+        return <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>Low</Badge>;
       default:
         return <Badge variant="outline">{priority}</Badge>;
     }
@@ -178,9 +178,9 @@ export default function Orders() {
   const getPaymentBadge = (status: string) => {
     switch (status) {
       case "Paid":
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Paid</Badge>;
+        return <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>Paid</Badge>;
       case "Pending":
-        return <Badge className="bg-orange-100 text-orange-700 border-orange-200">Pending</Badge>;
+        return <Badge style={{backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeaa7'}}>Pending</Badge>;
       case "Overdue":
         return <Badge className="bg-red-100 text-red-700 border-red-200">Overdue</Badge>;
       default:
@@ -201,11 +201,11 @@ export default function Orders() {
   const getTotalRevenue = () => orders.reduce((sum, order) => sum + order.total, 0);
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Order Management
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -231,7 +231,7 @@ export default function Orders() {
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             <Plus className="h-4 w-4 mr-2" />
             Create New Order
@@ -241,7 +241,7 @@ export default function Orders() {
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -251,7 +251,7 @@ export default function Orders() {
                   Current active orders
                 </p>
               </div>
-              <ShoppingCart className="h-10 w-10 text-blue-200" />
+              <ShoppingCart className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -262,18 +262,18 @@ export default function Orders() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Processing</p>
+                <p className="text-blue-100 text-sm font-medium">Processing</p>
                 <p className="text-3xl font-bold">{getProcessingOrders()}</p>
-                <p className="text-orange-100 text-xs mt-1">Pending fulfillment</p>
+                <p className="text-blue-100 text-xs mt-1">Pending fulfillment</p>
               </div>
-              <Activity className="h-10 w-10 text-orange-200" />
+              <Activity className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-orange-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <Clock className="h-4 w-4 mr-1" />
                 Avg processing: 2.3 days
               </div>
@@ -281,7 +281,7 @@ export default function Orders() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -289,7 +289,7 @@ export default function Orders() {
                 <p className="text-3xl font-bold">{getShippedOrders()}</p>
                 <p className="text-blue-100 text-xs mt-1">In transit to customers</p>
               </div>
-              <Truck className="h-10 w-10 text-blue-200" />
+              <Truck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -300,18 +300,18 @@ export default function Orders() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Revenue</p>
+                <p className="text-blue-100 text-sm font-medium">Revenue</p>
                 <p className="text-3xl font-bold">{formatCurrency(getTotalRevenue())}</p>
-                <p className="text-green-100 text-xs mt-1">Total order value</p>
+                <p className="text-blue-100 text-xs mt-1">Total order value</p>
               </div>
-              <DollarSign className="h-10 w-10 text-green-200" />
+              <DollarSign className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-green-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +8% vs last month
               </div>
@@ -324,9 +324,9 @@ export default function Orders() {
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
-            <ShoppingCart className="h-6 w-6 mr-3 text-blue-500" />
+            <ShoppingCart className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
             Customer Orders
-            <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
+            <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {orders.length} orders
             </Badge>
           </CardTitle>
@@ -339,7 +339,7 @@ export default function Orders() {
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                         <span className="text-white font-bold text-sm">{order.customer.charAt(0)}</span>
                       </div>
                       <div>
@@ -354,7 +354,7 @@ export default function Orders() {
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(order.status)}
                       {getPriorityBadge(order.priority)}
-                      <Button size="sm" variant="outline" className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100">
+                      <Button size="sm" variant="outline" className="text-xs" style={{backgroundColor: '#e6f2fa', borderColor: '#3997cd', color: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1e7dd'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e6f2fa'}>
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
@@ -382,7 +382,7 @@ export default function Orders() {
                         Order Details
                       </div>
                       <p className="text-lg font-semibold text-gray-900">{order.items} items</p>
-                      <p className="text-sm font-semibold text-green-600">{formatCurrency(order.total)}</p>
+                      <p className="text-sm font-semibold" style={{color: '#3997cd'}}>{formatCurrency(order.total)}</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
@@ -412,7 +412,7 @@ export default function Orders() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {order.parts.map((part, index) => (
-                        <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge key={index} variant="outline" className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
                           {part}
                         </Badge>
                       ))}

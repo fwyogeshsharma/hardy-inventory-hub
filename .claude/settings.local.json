@@ -6,7 +6,8 @@
       "Bash(dir)",
       "Bash(npm run dev:*)",
       "Bash(grep:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(timeout 10 npm run dev)"
     ],
     "deny": []
   }

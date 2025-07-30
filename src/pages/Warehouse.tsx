@@ -171,21 +171,21 @@ export default function Warehouse() {
     switch (type) {
       case "Inbound":
         return (
-          <Badge className="bg-green-100 text-blue-700 border-green-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <ArrowDownLeft className="h-3 w-3 mr-1" />
             Inbound
           </Badge>
         );
       case "Outbound":
         return (
-          <Badge className="bg-blue-100 text-blue-700 border-blue-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <ArrowUpRight className="h-3 w-3 mr-1" />
             Outbound
           </Badge>
         );
       case "Transfer":
         return (
-          <Badge className="bg-orange-100 text-blue-700 border-orange-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <ArrowRightLeft className="h-3 w-3 mr-1" />
             Transfer
           </Badge>
@@ -207,9 +207,9 @@ export default function Warehouse() {
       case "High":
         return <Badge className="bg-red-100 text-red-700 border-red-200">High</Badge>;
       case "Medium":
-        return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Medium</Badge>;
+        return <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>Medium</Badge>;
       case "Low":
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Low</Badge>;
+        return <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>Low</Badge>;
       default:
         return <Badge variant="outline">{priority}</Badge>;
     }
@@ -219,14 +219,14 @@ export default function Warehouse() {
     switch (status) {
       case "Active":
         return (
-          <Badge className="bg-green-100 text-blue-700 border-green-200">
+          <Badge style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <Activity className="h-3 w-3 mr-1" />
             Active
           </Badge>
         );
       case "Maintenance":
         return (
-          <Badge className="bg-orange-100 text-blue-700 border-orange-200">
+          <Badge style={{backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeaa7'}}>
             <AlertTriangle className="h-3 w-3 mr-1" />
             Maintenance
           </Badge>
@@ -252,11 +252,11 @@ export default function Warehouse() {
   const getTotalZones = () => warehouseLocations.reduce((sum, wh) => sum + wh.zones, 0);
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Warehouse Management
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -286,7 +286,7 @@ export default function Warehouse() {
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             <Truck className="h-4 w-4 mr-2" />
             New Shipment
@@ -296,7 +296,7 @@ export default function Warehouse() {
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -306,7 +306,7 @@ export default function Warehouse() {
                   Of {warehouseLocations.length} total locations
                 </p>
               </div>
-              <Building2 className="h-10 w-10 text-blue-200" />
+              <Building2 className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -317,7 +317,7 @@ export default function Warehouse() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -325,7 +325,7 @@ export default function Warehouse() {
                 <p className="text-3xl font-bold">{(getTotalCapacity() / 1000).toFixed(0)}K</p>
                 <p className="text-blue-100 text-xs mt-1">Square feet available</p>
               </div>
-              <Target className="h-10 w-10 text-blue-200" />
+              <Target className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -336,7 +336,7 @@ export default function Warehouse() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -344,7 +344,7 @@ export default function Warehouse() {
                 <p className="text-3xl font-bold">{getUtilizationPercentage(getTotalOccupied(), getTotalCapacity())}%</p>
                 <p className="text-blue-100 text-xs mt-1">{(getTotalOccupied() / 1000).toFixed(1)}K sq ft occupied</p>
               </div>
-              <BarChart3 className="h-10 w-10 text-blue-200" />
+              <BarChart3 className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -355,7 +355,7 @@ export default function Warehouse() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -363,7 +363,7 @@ export default function Warehouse() {
                 <p className="text-3xl font-bold">{recentMovements.length * 45}</p>
                 <p className="text-blue-100 text-xs mt-1">Transactions today</p>
               </div>
-              <Activity className="h-10 w-10 text-blue-200" />
+              <Activity className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -379,9 +379,9 @@ export default function Warehouse() {
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
-            <WarehouseIcon className="h-6 w-6 mr-3 text-blue-500" />
+            <WarehouseIcon className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
             Warehouse Locations
-            <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
+            <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {warehouseLocations.length} facilities
             </Badge>
           </CardTitle>
@@ -396,7 +396,7 @@ export default function Warehouse() {
                   <div className="p-6 border-b border-gray-100">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                           <Building2 className="h-6 w-6 text-white" />
                         </div>
                         <div>
@@ -442,12 +442,12 @@ export default function Warehouse() {
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-500">Occupied</p>
-                        <p className="text-lg font-semibold text-blue-600">{(location.occupied / 1000).toFixed(1)}K</p>
+                        <p className="text-lg font-semibold" style={{color: '#3997cd'}}>{(location.occupied / 1000).toFixed(1)}K</p>
                         <p className="text-xs text-gray-500">sq ft</p>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-500">Zones</p>
-                        <p className="text-lg font-semibold text-blue-600">{location.zones}</p>
+                        <p className="text-lg font-semibold" style={{color: '#3997cd'}}>{location.zones}</p>
                         <p className="text-xs text-gray-500">storage</p>
                       </div>
                     </div>
@@ -463,7 +463,7 @@ export default function Warehouse() {
                           className={`h-3 rounded-full transition-all duration-500 ${
                             utilization >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600' : 
                             utilization >= 75 ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 
-                            'bg-gradient-to-r from-green-500 to-green-600'
+                            'bg-gradient-to-r from-[#3997cd] to-[#2d7aad]'
                           }`}
                           style={{ width: `${utilization}%` }}
                         ></div>
@@ -486,9 +486,9 @@ export default function Warehouse() {
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
-            <Activity className="h-6 w-6 mr-3 text-blue-500" />
+            <Activity className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
             Recent Stock Movements
-            <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
+            <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {recentMovements.length} recent
             </Badge>
           </CardTitle>
@@ -500,7 +500,7 @@ export default function Warehouse() {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                         <span className="text-white font-bold text-sm">{movement.sku.split('-')[0].charAt(0)}</span>
                       </div>
                       <div>
@@ -571,7 +571,7 @@ export default function Warehouse() {
           </p>
           <Button 
             onClick={() => setModalOpen(false)}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+            className="text-white" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             Close
           </Button>

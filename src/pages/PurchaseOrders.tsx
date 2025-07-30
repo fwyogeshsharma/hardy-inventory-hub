@@ -128,21 +128,21 @@ export default function PurchaseOrders() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'partial': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'completed': return 'bg-green-100 text-blue-700 border-green-200';
+      case 'pending': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'partial': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'completed': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
       case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
     }
   };
 
   const getPriorityBadgeColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'bg-red-100 text-red-700 border-red-200';
-      case 'high': return 'bg-orange-100 text-blue-700 border-orange-200';
-      case 'medium': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'low': return 'bg-gray-100 text-gray-700 border-gray-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'high': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'medium': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'low': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      default: return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
     }
   };
 
@@ -200,20 +200,20 @@ export default function PurchaseOrders() {
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-100 text-sm font-medium">Pending Orders</p>
+                <p className="text-blue-100 text-sm font-medium">Pending Orders</p>
                 <p className="text-3xl font-bold">{stats.pending}</p>
-                <p className="text-yellow-100 text-xs mt-1">Awaiting delivery</p>
+                <p className="text-blue-100 text-xs mt-1">Awaiting delivery</p>
               </div>
-              <Clock className="h-10 w-10 text-yellow-200" />
+              <Clock className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -221,12 +221,12 @@ export default function PurchaseOrders() {
                 <p className="text-3xl font-bold">{stats.partial}</p>
                 <p className="text-blue-100 text-xs mt-1">Partially received</p>
               </div>
-              <Truck className="h-10 w-10 text-blue-200" />
+              <Truck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -234,12 +234,12 @@ export default function PurchaseOrders() {
                 <p className="text-3xl font-bold">{stats.completed}</p>
                 <p className="text-blue-100 text-xs mt-1">Fully received</p>
               </div>
-              <CheckCircle className="h-10 w-10 text-blue-200" />
+              <CheckCircle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -247,7 +247,7 @@ export default function PurchaseOrders() {
                 <p className="text-3xl font-bold">{formatCurrency(stats.totalValue)}</p>
                 <p className="text-blue-100 text-xs mt-1">All orders</p>
               </div>
-              <DollarSign className="h-10 w-10 text-blue-200" />
+              <DollarSign className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
@@ -378,7 +378,7 @@ export default function PurchaseOrders() {
                     </div>
                     
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-blue-600">
+                      <p className="text-sm font-semibold" style={{color: '#3997cd'}}>
                         {formatCurrency(order.total_cost || (order.quantity_ordered * (order.unit_cost || 0)))}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -395,7 +395,7 @@ export default function PurchaseOrders() {
                             const remainingQty = order.quantity_ordered - order.quantity_received;
                             handleReceiveOrder(order.id, remainingQty);
                           }}
-                          className="text-xs bg-green-50 border-green-200 text-blue-700 hover:bg-green-100"
+                          className="text-xs" style={{backgroundColor: '#e6f2fa', borderColor: '#3997cd', color: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1e7dd'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e6f2fa'}
                         >
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Receive
@@ -487,7 +487,7 @@ export default function PurchaseOrders() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Total Cost</p>
-                    <p className="font-semibold text-blue-600">
+                    <p className="font-semibold" style={{color: '#3997cd'}}>
                       {formatCurrency(selectedOrder.total_cost || (selectedOrder.quantity_ordered * (selectedOrder.unit_cost || 0)))}
                     </p>
                   </div>

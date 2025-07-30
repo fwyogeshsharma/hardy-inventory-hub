@@ -327,26 +327,26 @@ export default function WorkflowDashboard() {
         </Card>
 
         {/* Purchase Orders */}
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Purchase Orders</p>
+                <p className="text-blue-100 text-sm font-medium">Purchase Orders</p>
                 <p className="text-3xl font-bold">{stats.purchase_orders.pending}</p>
-                <p className="text-green-100 text-xs mt-1">Pending Orders</p>
+                <p className="text-blue-100 text-xs mt-1">Pending Orders</p>
               </div>
-              <ShoppingCart className="h-10 w-10 text-green-200" />
+              <ShoppingCart className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4 space-y-1">
-              <div className="flex justify-between text-green-100 text-sm">
+              <div className="flex justify-between text-blue-100 text-sm">
                 <span>In Transit:</span>
                 <span className="font-medium">{stats.purchase_orders.in_transit}</span>
               </div>
-              <div className="flex justify-between text-green-100 text-sm">
+              <div className="flex justify-between text-blue-100 text-sm">
                 <span>Received Today:</span>
                 <span className="font-medium">{stats.purchase_orders.received_today}</span>
               </div>
-              <div className="flex justify-between text-green-100 text-sm font-semibold">
+              <div className="flex justify-between text-blue-100 text-sm font-semibold">
                 <span>Total Value:</span>
                 <span>{formatCurrency(stats.purchase_orders.total_value)}</span>
               </div>
@@ -355,7 +355,7 @@ export default function WorkflowDashboard() {
         </Card>
 
         {/* Sales Orders */}
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -363,7 +363,7 @@ export default function WorkflowDashboard() {
                 <p className="text-3xl font-bold">{stats.sales_orders.pending}</p>
                 <p className="text-blue-100 text-xs mt-1">Pending Orders</p>
               </div>
-              <Users className="h-10 w-10 text-blue-200" />
+              <Users className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4 space-y-1">
               <div className="flex justify-between text-blue-100 text-sm">
@@ -383,26 +383,26 @@ export default function WorkflowDashboard() {
         </Card>
 
         {/* Production */}
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Production</p>
+                <p className="text-blue-100 text-sm font-medium">Production</p>
                 <p className="text-3xl font-bold">{stats.production.in_progress}</p>
-                <p className="text-orange-100 text-xs mt-1">Active Jobs</p>
+                <p className="text-blue-100 text-xs mt-1">Active Jobs</p>
               </div>
-              <Factory className="h-10 w-10 text-orange-200" />
+              <Factory className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4 space-y-1">
-              <div className="flex justify-between text-orange-100 text-sm">
+              <div className="flex justify-between text-blue-100 text-sm">
                 <span>Scheduled:</span>
                 <span className="font-medium">{stats.production.scheduled}</span>
               </div>
-              <div className="flex justify-between text-orange-100 text-sm">
+              <div className="flex justify-between text-blue-100 text-sm">
                 <span>Completed Today:</span>
                 <span className="font-medium">{stats.production.completed_today}</span>
               </div>
-              <div className="flex justify-between text-orange-100 text-sm font-semibold">
+              <div className="flex justify-between text-blue-100 text-sm font-semibold">
                 <span>Efficiency:</span>
                 <span>{stats.production.efficiency}%</span>
               </div>
@@ -432,7 +432,7 @@ export default function WorkflowDashboard() {
                   {stats.inventory.total_skus} Active
                 </Badge>
                 {stats.inventory.low_stock_items > 0 && (
-                  <Badge className="bg-orange-100 text-orange-700 text-xs">
+                  <Badge className="text-xs" style={{backgroundColor: '#fff3cd', color: '#856404'}}>
                     {stats.inventory.low_stock_items} Low Stock
                   </Badge>
                 )}
@@ -443,12 +443,12 @@ export default function WorkflowDashboard() {
 
             {/* Purchase Orders */}
             <div className="flex flex-col items-center min-w-0 flex-1">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center mb-3">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                 <ShoppingCart className="h-8 w-8 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900 text-sm text-center">Purchase Orders</h3>
               <div className="mt-2 space-y-1 text-center">
-                <Badge className="bg-green-100 text-green-700 text-xs">
+                <Badge className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd'}}>
                   {stats.purchase_orders.pending} Pending
                 </Badge>
                 <Badge className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd'}}>
@@ -461,7 +461,7 @@ export default function WorkflowDashboard() {
 
             {/* Sales Orders */}
             <div className="flex flex-col items-center min-w-0 flex-1">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center mb-3">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                 <Users className="h-8 w-8 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900 text-sm text-center">Sales Orders</h3>
@@ -469,7 +469,7 @@ export default function WorkflowDashboard() {
                 <Badge className="bg-[#e6f2fa] text-[#3997cd] border-[#3997cd] text-xs">
                   {stats.sales_orders.pending} Pending
                 </Badge>
-                <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                <Badge className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd'}}>
                   Stock Allocation
                 </Badge>
               </div>
@@ -479,15 +479,15 @@ export default function WorkflowDashboard() {
 
             {/* Production */}
             <div className="flex flex-col items-center min-w-0 flex-1">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center mb-3">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                 <Factory className="h-8 w-8 text-white" />
               </div>
               <h3 className="font-semibold text-gray-900 text-sm text-center">Production</h3>
               <div className="mt-2 space-y-1 text-center">
-                <Badge className="bg-orange-100 text-orange-700 text-xs">
+                <Badge className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd'}}>
                   {stats.production.in_progress} Active
                 </Badge>
-                <Badge className="bg-yellow-100 text-yellow-700 text-xs">
+                <Badge className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd'}}>
                   {stats.production.efficiency}% Efficiency
                 </Badge>
               </div>

@@ -115,21 +115,21 @@ export default function Vendors() {
     switch (status) {
       case "Active":
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <CheckCircle className="h-3 w-3 mr-1" />
             Active
           </Badge>
         );
       case "Pending Review":
         return (
-          <Badge className="bg-orange-100 text-orange-700 border-orange-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeaa7'}}>
             <Clock className="h-3 w-3 mr-1" />
             Pending Review
           </Badge>
         );
       case "Inactive":
         return (
-          <Badge className="bg-gray-100 text-gray-700 border-gray-200 shadow-sm">
+          <Badge className="shadow-sm" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
             <AlertTriangle className="h-3 w-3 mr-1" />
             Inactive
           </Badge>
@@ -159,11 +159,11 @@ export default function Vendors() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
             Vendor Management
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -189,7 +189,7 @@ export default function Vendors() {
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add New Vendor
@@ -199,7 +199,7 @@ export default function Vendors() {
 
       {/* KPI Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -209,7 +209,7 @@ export default function Vendors() {
                   {getActiveVendors()} active suppliers
                 </p>
               </div>
-              <Building2 className="h-10 w-10 text-blue-200" />
+              <Building2 className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -220,18 +220,18 @@ export default function Vendors() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Avg Rating</p>
+                <p className="text-blue-100 text-sm font-medium">Avg Rating</p>
                 <p className="text-3xl font-bold">{getAverageRating()}</p>
-                <p className="text-orange-100 text-xs mt-1">Out of 5.0 stars</p>
+                <p className="text-blue-100 text-xs mt-1">Out of 5.0 stars</p>
               </div>
-              <Star className="h-10 w-10 text-orange-200" />
+              <Star className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-orange-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +0.2 vs last quarter
               </div>
@@ -239,18 +239,18 @@ export default function Vendors() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Order Volume</p>
+                <p className="text-blue-100 text-sm font-medium">Order Volume</p>
                 <p className="text-3xl font-bold">$8.3M</p>
-                <p className="text-green-100 text-xs mt-1">Total annual volume</p>
+                <p className="text-blue-100 text-xs mt-1">Total annual volume</p>
               </div>
-              <DollarSign className="h-10 w-10 text-green-200" />
+              <DollarSign className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-green-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +15% year over year
               </div>
@@ -258,7 +258,7 @@ export default function Vendors() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -266,7 +266,7 @@ export default function Vendors() {
                 <p className="text-3xl font-bold">{getAverageDelivery()}%</p>
                 <p className="text-blue-100 text-xs mt-1">Average performance</p>
               </div>
-              <Truck className="h-10 w-10 text-blue-200" />
+              <Truck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
@@ -282,9 +282,9 @@ export default function Vendors() {
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
-            <Users className="h-6 w-6 mr-3 text-blue-500" />
+            <Users className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
             Automotive Parts Vendors
-            <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-600 border-blue-200">
+            <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {vendors.length} suppliers
             </Badge>
           </CardTitle>
@@ -297,7 +297,7 @@ export default function Vendors() {
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
                         <span className="text-white font-bold text-sm">{vendor.name.charAt(0)}</span>
                       </div>
                       <div>
@@ -369,7 +369,7 @@ export default function Vendors() {
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-300 ${
-                              vendor.onTimeDelivery >= 95 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                              vendor.onTimeDelivery >= 95 ? 'bg-gradient-to-r from-[#3997cd] to-[#2d7aad]' :
                               vendor.onTimeDelivery >= 90 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
                               'bg-gradient-to-r from-red-500 to-red-600'
                             }`}
@@ -388,7 +388,7 @@ export default function Vendors() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {vendor.parts.map((part, index) => (
-                        <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge key={index} variant="outline" className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
                           {part}
                         </Badge>
                       ))}
@@ -403,7 +403,7 @@ export default function Vendors() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {vendor.certifications.map((cert, index) => (
-                        <Badge key={index} className="text-xs bg-green-100 text-green-700 border-green-200">
+                        <Badge key={index} className="text-xs" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
                           {cert}
                         </Badge>
                       ))}

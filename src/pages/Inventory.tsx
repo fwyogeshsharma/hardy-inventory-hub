@@ -214,18 +214,18 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Low Stock</p>
+                <p className="text-blue-100 text-sm font-medium">Low Stock</p>
                 <p className="text-3xl font-bold">{getLowStockCount()}</p>
-                <p className="text-orange-100 text-xs mt-1">Below safety levels</p>
+                <p className="text-blue-100 text-xs mt-1">Below safety levels</p>
               </div>
-              <AlertTriangle className="h-10 w-10 text-orange-200" />
+              <AlertTriangle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-orange-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingDown className="h-4 w-4 mr-1" />
                 -8% improvement
               </div>
@@ -233,18 +233,18 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-100 text-sm font-medium">Out of Stock</p>
+                <p className="text-blue-100 text-sm font-medium">Out of Stock</p>
                 <p className="text-3xl font-bold">{getOutOfStockCount()}</p>
-                <p className="text-red-100 text-xs mt-1">Requires attention</p>
+                <p className="text-blue-100 text-xs mt-1">Requires attention</p>
               </div>
-              <Target className="h-10 w-10 text-red-200" />
+              <Target className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-red-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <AlertTriangle className="h-4 w-4 mr-1" />
                 Critical priority
               </div>
@@ -252,18 +252,18 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Total Value</p>
+                <p className="text-blue-100 text-sm font-medium">Total Value</p>
                 <p className="text-3xl font-bold">{formatCurrency(calculateTotalInventoryValue())}</p>
-                <p className="text-green-100 text-xs mt-1">Current inventory</p>
+                <p className="text-blue-100 text-xs mt-1">Current inventory</p>
               </div>
-              <DollarSign className="h-10 w-10 text-green-200" />
+              <DollarSign className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
-              <div className="flex items-center text-green-100 text-sm">
+              <div className="flex items-center text-blue-100 text-sm">
                 <TrendingUp className="h-4 w-4 mr-1" />
                 +15% value growth
               </div>
