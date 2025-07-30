@@ -32,7 +32,8 @@ import {
   Truck,
   Warehouse
 } from "lucide-react";
-import { dataService } from "@/lib/database";
+import { dataService, SKU, Inventory } from "@/lib/database";
+import { workflowManager } from "@/lib/workflowExtensions";
 import { initializeData } from "@/lib/initializeData";
 import { skuStorage } from "@/lib/localStorage";
 import { useState, useEffect } from "react";
@@ -44,7 +45,11 @@ import { AddSKUDrawer } from "./AddSKUDrawer";
 import { InitializeDataButton } from "./InitializeDataButton";
 
 export const Dashboard = () => {
-  const [skus, setSKUs] = useState<any[]>([]);
+  const [skus, setSKUs] = useState<SKU[]>([]);
+  const [inventory, setInventory] = useState<Inventory[]>([]);
+  const [workflowData, setWorkflowData] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [modals, setModals] = useState({
     addSKU: false,
     startProduction: false,
@@ -55,12 +60,12 @@ export const Dashboard = () => {
   });
   
   useEffect(() => {
-    setSKUs(skuStorage.getAll());
+    loadDashboardData();
     
     // Listen for real-time updates
     const handleDashboardRefresh = () => {
       console.log('📊 Dashboard refreshing with latest data...');
-      setSKUs(skuStorage.getAll());
+      loadDashboardData();
     };
     
     window.addEventListener('dashboard-refresh', handleDashboardRefresh);
@@ -69,6 +74,53 @@ export const Dashboard = () => {
       window.removeEventListener('dashboard-refresh', handleDashboardRefresh);
     };
   }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Load all data in parallel
+      const [
+        skusData,
+        inventoryData,
+        workflowSummary,
+        reorderRequests,
+        purchaseOrderItems,
+        supplierOrders,
+        bomTemplates,
+        kitProductionOrders
+      ] = await Promise.all([
+        dataService.getSKUs(),
+        dataService.getInventory(),
+        workflowManager.getWorkflowSummary(),
+        workflowManager.getReorderRequests(),
+        workflowManager.getPurchaseOrderItems(),
+        workflowManager.getSupplierOrders(),
+        workflowManager.getBOMTemplates(),
+        workflowManager.getKitProductionOrders()
+      ]);
+      
+      setSKUs(skusData);
+      setInventory(inventoryData);
+      setWorkflowData({
+        summary: workflowSummary,
+        reorderRequests,
+        purchaseOrderItems,
+        supplierOrders,
+        bomTemplates,
+        kitProductionOrders
+      });
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setError('Failed to load dashboard data. Please try again.');
+      // Fallback to localStorage data
+      setSKUs(skuStorage.getAll());
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openModal = (modalName: keyof typeof modals) => {
     setModals(prev => ({ ...prev, [modalName]: true }));
@@ -84,69 +136,145 @@ export const Dashboard = () => {
     setSKUs(skuStorage.getAll());
   };
 
-  // Calculate real metrics from SKU data
+  // Calculate real metrics from loaded data
   const calculateMetrics = () => {
     const totalSKUs = skus.length;
     const activeSKUs = skus.filter(sku => sku.status === 'active').length;
-
     const discontinuedSKUs = skus.filter(sku => sku.status === 'discontinued').length;
+    const kitSKUs = skus.filter(sku => sku.sku_type === 'kit').length;
     
-    // Mock additional data based on real SKUs
-    const lowStockItems = Math.floor(totalSKUs * 0.15); // 15% low stock
-    const activeOrders = Math.floor(totalSKUs * 2.3); // ~2.3 orders per SKU
-    const productionRuns = Math.floor(totalSKUs * 0.18); // ~18% in production
+    // Calculate real inventory metrics
+    const outOfStockItems = inventory.filter(inv => inv.quantity_on_hand === 0).length;
+    const lowStockItems = inventory.filter(inv => 
+      inv.quantity_on_hand > 0 && inv.quantity_on_hand <= inv.safety_stock_level
+    ).length;
+    
+    // Calculate real workflow metrics
+    const reorderRequests = workflowData.reorderRequests?.length || 0;
+    const pendingReorders = workflowData.reorderRequests?.filter((r: any) => r.status === 'pending').length || 0;
+    const purchaseOrderItems = workflowData.purchaseOrderItems?.length || 0;
+    const supplierOrders = workflowData.supplierOrders?.length || 0;
+    const activeSupplierOrders = workflowData.supplierOrders?.filter((so: any) => so.workflow_status === 'active').length || 0;
+    const kitProductionOrders = workflowData.kitProductionOrders?.length || 0;
+    const activeProduction = workflowData.kitProductionOrders?.filter((kpo: any) => kpo.status === 'in_progress').length || 0;
+    const completedProduction = workflowData.kitProductionOrders?.filter((kpo: any) => kpo.status === 'completed').length || 0;
+    
+    // Calculate total inventory value
+    const totalInventoryValue = inventory.reduce((total, inv) => {
+      const sku = skus.find(s => s.id === inv.sku_id);
+      return total + (inv.quantity_on_hand * (inv.unit_cost || sku?.unit_cost || 0));
+    }, 0);
     
     return {
       totalSKUs,
       activeSKUs,
-      // upcomingSKUs,
       discontinuedSKUs,
+      kitSKUs,
+      outOfStockItems,
       lowStockItems,
-      activeOrders,
-      productionRuns
+      reorderRequests,
+      pendingReorders,
+      purchaseOrderItems,
+      supplierOrders,
+      activeSupplierOrders,
+      kitProductionOrders,
+      activeProduction,
+      completedProduction,
+      totalInventoryValue
     };
   };
 
   const metrics = calculateMetrics();
 
-  const recentAlerts = [
-    { 
-      id: 1, 
-      type: "Stock Alert", 
-      message: "Brake pads for Toyota Camry running low - 22 units remaining",
-      priority: "high", 
-      time: "30 minutes ago",
-      icon: Package,
-      color: "text-[#3997cd]"
-    },
-    { 
-      id: 2, 
-      type: "Production", 
-      message: "Alternator assembly for Honda Civic batch completed", 
-      priority: "low", 
-      time: "2 hours ago",
-      icon: Factory,
-      color: "text-[#3997cd]"
-    },
-    { 
-      id: 3, 
-      type: "Order", 
-      message: "Bulk order from AutoZone received", 
-      priority: "medium", 
-      time: "4 hours ago",
-      icon: ShoppingCart,
-      color: '#3997cd'
-    },
-    { 
-      id: 4, 
-      type: "Vendor", 
-      message: "Shipment from Denso Parts confirmed", 
-      priority: "low", 
-      time: "6 hours ago",
-      icon: Truck,
-      color: "text-[#3997cd]"
+  // Generate real alerts based on actual data
+  const generateRealAlerts = () => {
+    const alerts = [];
+    let alertId = 1;
+    
+    // Out of stock alerts
+    const outOfStockInventory = inventory.filter(inv => inv.quantity_on_hand === 0);
+    outOfStockInventory.slice(0, 3).forEach(inv => {
+      const sku = skus.find(s => s.id === inv.sku_id);
+      if (sku) {
+        alerts.push({
+          id: alertId++,
+          type: "Out of Stock",
+          message: `${sku.sku_name} (${sku.sku_code}) is completely out of stock`,
+          priority: "high",
+          time: "Just now",
+          icon: AlertTriangle,
+          color: "text-red-600"
+        });
+      }
+    });
+    
+    // Low stock alerts
+    const lowStockInventory = inventory.filter(inv => 
+      inv.quantity_on_hand > 0 && inv.quantity_on_hand <= inv.safety_stock_level
+    );
+    lowStockInventory.slice(0, 2).forEach(inv => {
+      const sku = skus.find(s => s.id === inv.sku_id);
+      if (sku) {
+        alerts.push({
+          id: alertId++,
+          type: "Low Stock",
+          message: `${sku.sku_name} running low - ${inv.quantity_on_hand} units remaining`,
+          priority: "medium",
+          time: "2 hours ago",
+          icon: Package,
+          color: "text-orange-600"
+        });
+      }
+    });
+    
+    // Production alerts
+    const inProgressProduction = workflowData.kitProductionOrders?.filter((kpo: any) => kpo.status === 'in_progress') || [];
+    inProgressProduction.slice(0, 1).forEach((prod: any) => {
+      const sku = skus.find(s => s.id === prod.kit_sku_id);
+      if (sku) {
+        alerts.push({
+          id: alertId++,
+          type: "Production",
+          message: `${sku.sku_name} production in progress - ${prod.quantity_planned} units`,
+          priority: "low",
+          time: "4 hours ago",
+          icon: Factory,
+          color: "text-blue-600"
+        });
+      }
+    });
+    
+    // Supplier order alerts
+    const activeOrders = workflowData.supplierOrders?.filter((so: any) => so.workflow_status === 'active') || [];
+    activeOrders.slice(0, 1).forEach((order: any) => {
+      alerts.push({
+        id: alertId++,
+        type: "Order",
+        message: `Supplier order ${order.order_number} in transit - ${order.quantity_ordered} units expected`,
+        priority: "low",
+        time: "6 hours ago",
+        icon: Truck,
+        color: "text-green-600"
+      });
+    });
+    
+    // Add some default alerts if no real data
+    if (alerts.length === 0) {
+      alerts.push({
+        id: 1,
+        type: "System",
+        message: "All systems running normally - no critical alerts",
+        priority: "low",
+        time: "Just now",
+        icon: CheckCircle,
+        color: "text-green-600"
+      });
     }
-  ];
+    
+    return alerts;
+  };
+
+  const recentAlerts = generateRealAlerts();
 
   const recentActivities = [
     { id: 1, user: "QA Team", action: "approved alternator batch #A2024-101", time: "45 minutes ago", avatar: "QA" },
@@ -213,6 +341,34 @@ export const Dashboard = () => {
     }).format(amount);
   };
 
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#3997cd] mx-auto mb-4"></div>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">Loading Dashboard...</h3>
+          <p className="text-gray-500">Fetching your inventory data and metrics</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
+        <div className="text-center">
+          <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">Error Loading Dashboard</h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={loadDashboardData} className="bg-[#3997cd] hover:bg-[#2d7aad] text-white">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
@@ -261,7 +417,7 @@ export const Dashboard = () => {
         <MetricCard
           title="Total SKUs"
           value={metrics.totalSKUs.toString()}
-          description={`${metrics.activeSKUs} active items`}
+          description={`${metrics.activeSKUs} active • ${metrics.kitSKUs} kits`}
           icon={Package}
           trend="up"
           trendValue="+12%"
@@ -269,19 +425,19 @@ export const Dashboard = () => {
           className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
-          title="Low Stock Alerts"
-          value={metrics.lowStockItems.toString()}
-          description="Require immediate attention"
+          title="Stock Issues"
+          value={(metrics.outOfStockItems + metrics.lowStockItems).toString()}
+          description={`${metrics.outOfStockItems} out • ${metrics.lowStockItems} low`}
           icon={AlertTriangle}
-          trend="down"
-          trendValue="-8%"
+          trend={metrics.outOfStockItems > 0 ? "up" : "down"}
+          trendValue={metrics.outOfStockItems > 0 ? "+Alert" : "Good"}
           variant="warning"
           className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
-          title="Active Orders"
-          value={metrics.activeOrders.toString()}
-          description="In progress & pending"
+          title="Workflow Orders"
+          value={metrics.supplierOrders.toString()}
+          description={`${metrics.activeSupplierOrders} active • ${metrics.reorderRequests} reorders`}
           icon={ShoppingCart}
           trend="up"
           trendValue="+23%"
@@ -289,12 +445,12 @@ export const Dashboard = () => {
           className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
         <MetricCard
-          title="Production Runs"
-          value={metrics.productionRuns.toString()}
-          description="Active this month"
+          title="Kit Production"
+          value={metrics.kitProductionOrders.toString()}
+          description={`${metrics.activeProduction} in progress • ${metrics.completedProduction} completed`}
           icon={Factory}
-          trend="stable"
-          trendValue="+5%"
+          trend={metrics.activeProduction > 0 ? "up" : "stable"}
+          trendValue={metrics.activeProduction > 0 ? "Active" : "Ready"}
           variant="default"
           className="text-white border-0 shadow-lg bg-gradient-to-br from-[#3997cd] to-[#2d7aad]"
         />
@@ -307,7 +463,7 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>$847K</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>{formatCurrency(metrics.totalInventoryValue)}</p>
               </div>
               <DollarSign className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>
@@ -388,7 +544,7 @@ export const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Alerts</p>
-                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>{recentAlerts.length}</p>
+                <p className="text-2xl font-bold" style={{color: '#3997cd'}}>{metrics.outOfStockItems + metrics.lowStockItems + metrics.pendingReorders}</p>
               </div>
               <Bell className="h-8 w-8" style={{color: '#3997cd'}} />
             </div>

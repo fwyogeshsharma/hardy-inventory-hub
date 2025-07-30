@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { FormModal } from "@/components/forms/FormModal";
 import { inventoryManager, dataService, SKU } from "@/lib/database";
+import { workflowManager, KitProductionOrder, BOMTemplate } from "@/lib/workflowExtensions";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Factory, 
@@ -24,7 +25,13 @@ import {
   RefreshCw,
   Plus,
   Timer,
-  Wrench
+  Wrench,
+  Eye,
+  ClipboardCheck,
+  Truck,
+  Building2,
+  MapPin,
+  Loader2
 } from "lucide-react";
 
 interface ProductionJobOrder {
@@ -51,50 +58,63 @@ interface ProductionJobOrder {
   sku?: SKU;
 }
 
+interface ExtendedKitProductionOrder extends KitProductionOrder {
+  kit_sku?: SKU;
+  bom_template?: BOMTemplate;
+  needs_inspection?: boolean;
+  inspection_completed?: boolean;
+  selected_warehouse?: number;
+}
+
+interface InspectionModal {
+  isOpen: boolean;
+  order: ExtendedKitProductionOrder | null;
+}
+
 export default function Production() {
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [productionOrders, setProductionOrders] = useState<ProductionJobOrder[]>([]);
+  const [kitProductionOrders, setKitProductionOrders] = useState<ExtendedKitProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<ProductionJobOrder | null>(null);
+  const [inspectionModal, setInspectionModal] = useState<InspectionModal>({ isOpen: false, order: null });
+  const [processingOrders, setProcessingOrders] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    loadProductionOrders();
-    
-    // Subscribe to real-time updates
-    inventoryManager.subscribe('production_job_order_created', handleProductionOrderUpdate);
-    inventoryManager.subscribe('production_job_order_started', handleProductionOrderUpdate);
-    inventoryManager.subscribe('production_job_order_completed', handleProductionOrderUpdate);
+    loadKitProductionOrders();
     
     return () => {
       clearInterval(timer);
     };
   }, []);
 
-  const loadProductionOrders = async () => {
+  const loadKitProductionOrders = async () => {
     try {
       setLoading(true);
-      const [orders, skus] = await Promise.all([
-        inventoryManager.getProductionJobOrders(),
-        dataService.getSKUs()
+      const [orders, skus, bomTemplates] = await Promise.all([
+        workflowManager.getKitProductionOrders(),
+        dataService.getSKUs(),
+        workflowManager.getBOMTemplates()
       ]);
       
-      // Enrich orders with SKU data
+      // Enrich orders with SKU and BOM data
       const enrichedOrders = orders.map((order: any) => ({
         ...order,
-        sku: skus.find(s => s.id === order.sku_id)
+        kit_sku: skus.find(s => s.id === order.kit_sku_id),
+        bom_template: bomTemplates.find(bom => bom.id === order.bom_template_id),
+        needs_inspection: order.status === 'in_progress' && order.quantity_completed === 0,
+        inspection_completed: order.status === 'completed'
       }));
       
-      setProductionOrders(enrichedOrders);
+      setKitProductionOrders(enrichedOrders);
     } catch (error) {
-      console.error('Error loading production orders:', error);
+      console.error('Error loading kit production orders:', error);
       toast({
         title: "Error",
-        description: "Failed to load production orders",
+        description: "Failed to load production orders", 
         variant: "destructive",
       });
     } finally {
@@ -102,58 +122,91 @@ export default function Production() {
     }
   };
 
-  const handleProductionOrderUpdate = () => {
-    loadProductionOrders();
-  };
-
-  const handleStartOrder = async (orderId: number) => {
+  const handleStartProduction = async (orderId: number) => {
     try {
-      await inventoryManager.startProductionJobOrder(orderId);
+      setProcessingOrders(prev => new Set(prev).add(orderId));
+      
+      await workflowManager.startKitProduction(orderId);
+      
       toast({
         title: "Production Started",
-        description: "Production job order has been started",
+        description: "Kit production has been started successfully",
       });
-      loadProductionOrders();
+      
+      await loadKitProductionOrders();
+      
     } catch (error) {
-      console.error('Error starting production order:', error);
+      console.error('Error starting production:', error);
       toast({
         title: "Error",
-        description: "Failed to start production order",
+        description: "Failed to start production",
         variant: "destructive",
+      });
+    } finally {
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
       });
     }
   };
 
-  const handleCompleteOrder = async (orderId: number, quantityCompleted: number) => {
+  const handleInspection = (order: ExtendedKitProductionOrder) => {
+    setInspectionModal({ isOpen: true, order });
+  };
+
+  const handleInspectionComplete = async (approved: boolean, warehouseId: number) => {
+    if (!inspectionModal.order) return;
+    
     try {
-      await inventoryManager.completeProductionJobOrder(orderId, {
-        quantity_completed: quantityCompleted,
-        notes: "Production completed successfully"
-      });
-      toast({
-        title: "Production Completed",
-        description: `Successfully completed ${quantityCompleted} units`,
-      });
-      loadProductionOrders();
+      setProcessingOrders(prev => new Set(prev).add(inspectionModal.order!.id));
+      
+      if (approved) {
+        // Complete production and assign to warehouse
+        await workflowManager.completeKitProduction(inspectionModal.order.id, inspectionModal.order.quantity_planned);
+        
+        toast({
+          title: "Inspection Approved",
+          description: `Production completed and ${inspectionModal.order.quantity_planned} units added to warehouse`,
+        });
+      } else {
+        toast({
+          title: "Inspection Failed",
+          description: "Production rejected - review required",
+          variant: "destructive",
+        });
+      }
+      
+      setInspectionModal({ isOpen: false, order: null });
+      await loadKitProductionOrders();
+      
     } catch (error) {
-      console.error('Error completing production order:', error);
+      console.error('Error completing inspection:', error);
       toast({
         title: "Error",
-        description: "Failed to complete production order",
+        description: "Failed to complete inspection",
         variant: "destructive",
+      });
+    } finally {
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        if (inspectionModal.order) {
+          newSet.delete(inspectionModal.order.id);
+        }
+        return newSet;
       });
     }
   };
 
   const handleFormSubmit = () => {
     setModalOpen(false);
-    loadProductionOrders();
+    loadKitProductionOrders();
   };
 
-  const filteredOrders = productionOrders.filter(order => {
-    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.sku?.sku_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.sku?.sku_code.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredOrders = kitProductionOrders.filter(order => {
+    const matchesSearch = order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.kit_sku?.sku_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.kit_sku?.sku_code?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -220,16 +273,17 @@ export default function Production() {
     return Math.round((completed / total) * 100);
   };
 
-  const getActiveRuns = () => productionOrders.filter(order => order.status === "in_progress").length;
+  const getActiveRuns = () => kitProductionOrders.filter(order => order.status === "in_progress").length;
   const getCompletedToday = () => {
     const today = new Date().toISOString().split('T')[0];
-    return productionOrders
+    return kitProductionOrders
       .filter(order => order.actual_completion_date === today)
       .reduce((sum, order) => sum + order.quantity_completed, 0);
   };
-  const getScheduledRuns = () => productionOrders.filter(order => order.status === "scheduled").length;
+  const getPlannedRuns = () => kitProductionOrders.filter(order => order.status === "planned").length;
+  const getNeedsInspection = () => kitProductionOrders.filter(order => order.needs_inspection).length;
   const getAverageEfficiency = () => {
-    const completedOrders = productionOrders.filter(order => order.status === "completed" && order.quantity_completed > 0);
+    const completedOrders = kitProductionOrders.filter(order => order.status === "completed" && order.quantity_completed > 0);
     if (completedOrders.length === 0) return 0;
     const avgEfficiency = completedOrders.reduce((sum, order) => {
       const efficiency = (order.quantity_completed / order.quantity_planned) * 100;
@@ -244,10 +298,10 @@ export default function Production() {
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
           <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
-            Production Management
+            Kit Production & Inspection
           </h1>
           <p className="text-lg text-muted-foreground">
-            Monitor and manage automotive parts production runs
+            Monitor kit production, quality inspection, and warehouse assignment
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -267,7 +321,7 @@ export default function Production() {
             variant="outline" 
             size="sm" 
             className="bg-white/50 backdrop-blur-sm"
-            onClick={loadProductionOrders}
+            onClick={loadKitProductionOrders}
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -329,16 +383,16 @@ export default function Production() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Scheduled</p>
-                <p className="text-3xl font-bold">{getScheduledRuns()}</p>
-                <p className="text-blue-100 text-xs mt-1">Upcoming runs</p>
+                <p className="text-blue-100 text-sm font-medium">Needs Inspection</p>
+                <p className="text-3xl font-bold">{getNeedsInspection()}</p>
+                <p className="text-blue-100 text-xs mt-1">Awaiting quality check</p>
               </div>
-              <Timer className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
+              <ClipboardCheck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
             <div className="mt-4">
               <div className="flex items-center text-blue-100 text-sm">
-                <Clock className="h-4 w-4 mr-1" />
-                Next: Tomorrow 8AM
+                <Eye className="h-4 w-4 mr-1" />
+                Ready for inspection
               </div>
             </div>
           </CardContent>
@@ -391,11 +445,11 @@ export default function Production() {
                 className="px-3 py-2 bg-white/80 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Status</option>
-                <option value="scheduled">Scheduled</option>
+                <option value="planned">Planned</option>
                 <option value="in_progress">In Progress</option>
-                <option value="paused">Paused</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="on_hold">On Hold</option>
               </select>
             </div>
           </div>
@@ -407,7 +461,7 @@ export default function Production() {
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
             <Factory className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
-            Production Job Orders
+            Kit Production Orders
             <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {filteredOrders.length} orders
             </Badge>
@@ -422,19 +476,15 @@ export default function Production() {
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-8">
               <Factory className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-xl font-medium text-gray-600 mb-2">No Production Orders</h3>
+              <h3 className="text-xl font-medium text-gray-600 mb-2">No Kit Production Orders</h3>
               <p className="text-gray-500 mb-6">
                 {searchTerm || statusFilter !== "all" 
                   ? "No orders match your current filters"
-                  : "Create your first production order to start manufacturing"}
+                  : "Create kit production orders from the BOM page to start manufacturing"}
               </p>
-              <Button 
-                onClick={() => setModalOpen(true)}
-                className="text-white shadow-lg" style={{backgroundColor: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2d7aad'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3997cd'}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Production Order
-              </Button>
+              <p className="text-sm text-gray-400">
+                Note: Production orders are created from BOM templates in the Bill of Materials section
+              </p>
             </div>
           ) : (
           <div className="space-y-6">
@@ -445,38 +495,59 @@ export default function Production() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{backgroundColor: '#3997cd'}}>
-                        <span className="text-white font-bold text-sm">{order.sku?.brand?.name?.charAt(0) || 'P'}</span>
+                        <span className="text-white font-bold text-sm">{order.kit_sku?.brand?.name?.charAt(0) || 'K'}</span>
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 text-lg">{order.order_number}</h3>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{order.sku?.sku_code}</Badge>
+                          <Badge variant="outline" className="text-xs">{order.kit_sku?.sku_code}</Badge>
                           <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-500">{order.sku?.sku_name}</span>
+                          <span className="text-xs text-gray-500">{order.kit_sku?.sku_name}</span>
+                          <span className="text-xs text-gray-400">•</span>
+                          <span className="text-xs text-gray-500">BOM: {order.bom_template?.name}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(order.status)}
-                      {getPriorityBadge(order.priority)}
-                      {order.status === "in_progress" && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
-                          onClick={() => handleCompleteOrder(order.id, order.quantity_planned)}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {order.status === "scheduled" && (
+                      
+                      {/* Action Buttons */}
+                      {order.status === "planned" && (
                         <Button 
                           size="sm" 
                           className="bg-green-500 hover:bg-green-600 text-white"
-                          onClick={() => handleStartOrder(order.id)}
+                          onClick={() => handleStartProduction(order.id)}
+                          disabled={processingOrders.has(order.id)}
                         >
-                          <Play className="h-4 w-4" />
+                          {processingOrders.has(order.id) ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <>
+                              <Play className="h-4 w-4 mr-1" />
+                              Start Production
+                            </>
+                          )}
                         </Button>
+                      )}
+                      
+                      {order.needs_inspection && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                          onClick={() => handleInspection(order)}
+                          disabled={processingOrders.has(order.id)}
+                        >
+                          <ClipboardCheck className="h-4 w-4 mr-1" />
+                          Inspect
+                        </Button>
+                      )}
+                      
+                      {order.inspection_completed && (
+                        <Badge className="bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Completed
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -490,32 +561,39 @@ export default function Production() {
                         <Package className="h-4 w-4 mr-1" />
                         Planned Quantity
                       </div>
-                      <p className="text-lg font-semibold text-gray-900">{order.quantity_planned.toLocaleString()} units</p>
+                      <p className="text-lg font-semibold text-gray-900">{order.quantity_planned.toLocaleString()} kits</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Completed
                       </div>
-                      <p className="text-lg font-semibold text-green-600">{order.quantity_completed.toLocaleString()} units</p>
+                      <p className="text-lg font-semibold text-green-600">{order.quantity_completed.toLocaleString()} kits</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
-                        <Wrench className="h-4 w-4 mr-1" />
-                        Supervisor
+                        <Factory className="h-4 w-4 mr-1" />
+                        Total Cost
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{order.supervisor || 'Not assigned'}</p>
-                      <p className="text-xs text-gray-500">{order.shift.charAt(0).toUpperCase() + order.shift.slice(1)} shift</p>
+                      <p className="text-lg font-semibold text-blue-600">${order.total_cost.toLocaleString()}</p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-500">
-                        <Target className="h-4 w-4 mr-1" />
-                        Priority
+                        <Activity className="h-4 w-4 mr-1" />
+                        Status
                       </div>
                       <div className="flex items-center space-x-2">
-                        {getPriorityBadge(order.priority)}
-                        {order.quantity_scrapped > 0 && (
-                          <Badge className="bg-red-100 text-red-700 text-xs">{order.quantity_scrapped} Scrapped</Badge>
+                        {order.needs_inspection && (
+                          <Badge className="bg-yellow-100 text-yellow-700 text-xs">
+                            <Eye className="h-3 w-3 mr-1" />
+                            Needs Inspection
+                          </Badge>
+                        )}
+                        {order.inspection_completed && (
+                          <Badge className="bg-green-100 text-green-700 text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Inspected
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -528,12 +606,14 @@ export default function Production() {
                         <Calendar className="h-4 w-4 mr-1" />
                         Planned Start
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{new Date(order.planned_start_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {order.planned_start_date ? new Date(order.planned_start_date).toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        }) : 'Not scheduled'}
+                      </p>
                       {order.actual_start_date && (
                         <p className="text-xs text-green-600">Started: {new Date(order.actual_start_date).toLocaleDateString()}</p>
                       )}
@@ -543,12 +623,14 @@ export default function Production() {
                         <Clock className="h-4 w-4 mr-1" />
                         Expected Completion
                       </div>
-                      <p className="text-sm font-medium text-gray-900">{new Date(order.planned_completion_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {order.planned_completion_date ? new Date(order.planned_completion_date).toLocaleDateString('en-US', { 
+                          weekday: 'short', 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        }) : 'Not scheduled'}
+                      </p>
                       {order.actual_completion_date && (
                         <p className="text-xs text-green-600">Completed: {new Date(order.actual_completion_date).toLocaleDateString()}</p>
                       )}
@@ -568,32 +650,36 @@ export default function Production() {
                           style={{ 
                             width: `${getProgress(order.quantity_completed, order.quantity_planned)}%`,
                             background: order.status === "completed" 
-                              ? 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'
+                              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                               : 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'
                           }}
                         ></div>
                       </div>
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>0</span>
-                        <span>{order.quantity_planned.toLocaleString()} units</span>
+                        <span>{order.quantity_planned.toLocaleString()} kits</span>
                       </div>
                     </div>
                   )}
                   
-                  {/* Material Requirements */}
-                  {order.material_check_results && order.material_check_results.length > 0 && (
+                  {/* BOM Information */}
+                  {order.bom_template && (
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Material Requirements</h4>
-                      <div className="space-y-1">
-                        {order.material_check_results.map((material: any, index: number) => (
-                          <div key={index} className="flex justify-between text-xs">
-                            <span>Material {material.material_id}</span>
-                            <span className={material.sufficient ? 'text-green-600' : 'text-red-600'}>
-                              {material.available}/{material.required} {material.sufficient ? '✓' : '⚠️'}
-                            </span>
-                          </div>
-                        ))}
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Bill of Materials</h4>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <p><strong>Template:</strong> {order.bom_template.name} (v{order.bom_template.version})</p>
+                        <p><strong>Material Cost:</strong> ${(order.total_material_cost || 0).toLocaleString()}</p>
+                        <p><strong>Labor Cost:</strong> ${(order.labor_cost || 0).toLocaleString()}</p>
+                        <p><strong>Overhead Cost:</strong> ${(order.overhead_cost || 0).toLocaleString()}</p>
                       </div>
+                    </div>
+                  )}
+                  
+                  {/* Notes */}
+                  {order.notes && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-700 mb-1">Notes</h4>
+                      <p className="text-xs text-blue-600">{order.notes}</p>
                     </div>
                   )}
                 </div>
@@ -604,25 +690,127 @@ export default function Production() {
         </CardContent>
       </Card>
 
-      {/* Production Order Modal */}
+      {/* Inspection Modal */}
       <FormModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Create Production Job Order"
-        maxWidth="max-w-4xl"
+        isOpen={inspectionModal.isOpen}
+        onClose={() => setInspectionModal({ isOpen: false, order: null })}
+        title="Quality Inspection"
+        maxWidth="max-w-2xl"
       >
-        <div className="text-center py-8">
-          <p className="text-gray-600">Production job order creation form would be implemented here.</p>
-          <p className="text-sm text-gray-500 mt-2">
-            This would include SKU selection, quantity planning, scheduling, and material requirements.
-          </p>
-          <Button 
-            onClick={handleFormSubmit}
-            className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-          >
-            Close
-          </Button>
-        </div>
+        {inspectionModal.order && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <ClipboardCheck className="h-16 w-16 mx-auto mb-4" style={{color: '#3997cd'}} />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Quality Inspection Required
+              </h3>
+              <p className="text-gray-600">
+                Production of {inspectionModal.order.quantity_planned} units of {inspectionModal.order.kit_sku?.sku_name} is complete.
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-3">Production Details</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Order Number:</span>
+                  <p className="font-medium">{inspectionModal.order.order_number}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Kit SKU:</span>
+                  <p className="font-medium">{inspectionModal.order.kit_sku?.sku_code}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Quantity:</span>
+                  <p className="font-medium">{inspectionModal.order.quantity_planned} units</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Total Cost:</span>
+                  <p className="font-medium">${inspectionModal.order.total_cost.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Select Warehouse for Approved Units</h4>
+              <div className="grid grid-cols-1 gap-3">
+                <label className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="warehouse"
+                    value="1"
+                    defaultChecked
+                    className="text-blue-600"
+                  />
+                  <div className="flex items-center space-x-2">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <span>Main Warehouse</span>
+                  </div>
+                </label>
+                <label className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="warehouse"
+                    value="2"
+                    className="text-blue-600"
+                  />
+                  <div className="flex items-center space-x-2">
+                    <Truck className="h-4 w-4 text-gray-500" />
+                    <span>Distribution Center</span>
+                  </div>
+                </label>
+                <label className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="warehouse"
+                    value="3"
+                    className="text-blue-600"
+                  />
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                    <span>Regional Warehouse</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Eye className="h-4 w-4 text-blue-600" />
+                <span className="font-medium text-blue-900">Inspection Question</span>
+              </div>
+              <p className="text-blue-800 text-sm">
+                Has the production work been completed successfully and are all units ready for warehouse storage?
+              </p>
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <Button
+                onClick={() => handleInspectionComplete(true, 1)}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                disabled={processingOrders.has(inspectionModal.order.id)}
+              >
+                {processingOrders.has(inspectionModal.order.id) ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Yes - Approve & Send to Warehouse
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => handleInspectionComplete(false, 1)}
+                variant="outline"
+                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                disabled={processingOrders.has(inspectionModal.order.id)}
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                No - Reject Production
+              </Button>
+            </div>
+          </div>
+        )}
       </FormModal>
     </div>
   );

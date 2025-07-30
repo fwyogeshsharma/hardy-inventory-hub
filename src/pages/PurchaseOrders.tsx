@@ -20,73 +20,82 @@ import {
   Search,
   Eye,
   Edit,
-  Loader2
+  Loader2,
+  Warehouse,
+  ClipboardCheck,
+  XCircle,
+  PlayCircle
 } from "lucide-react";
 import { inventoryManager, dataService, SKU } from "@/lib/database";
+import { workflowManager, PurchaseOrderItem, ReorderRequest } from "@/lib/workflowExtensions";
 import { useToast } from "@/hooks/use-toast";
 import { FormModal } from "@/components/forms/FormModal";
 
-interface PurchaseOrder {
+interface ExtendedPurchaseOrder {
   id: number;
   order_number: string;
-  sku_id: number;
+  vendor_id: number;
   warehouse_id: number;
-  quantity_ordered: number;
-  quantity_received: number;
-  status: 'pending' | 'partial' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  reorder_request_id?: number;
+  status: 'pending' | 'approved' | 'sent' | 'partial' | 'completed' | 'cancelled';
   order_date: string;
-  expected_delivery_date: string;
+  expected_delivery_date?: string;
   actual_delivery_date?: string;
-  vendor_id?: number;
-  unit_cost?: number;
-  total_cost?: number;
+  total_amount: number;
   notes?: string;
   created_at: string;
   updated_at: string;
-  sku?: SKU;
+  items?: PurchaseOrderItem[];
 }
 
 export default function PurchaseOrders() {
   const { toast } = useToast();
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<ExtendedPurchaseOrder[]>([]);
+  const [purchaseOrderItems, setPurchaseOrderItems] = useState<PurchaseOrderItem[]>([]);
+  const [reorderRequests, setReorderRequests] = useState<ReorderRequest[]>([]);
+  const [skus, setSKUs] = useState<SKU[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [checkingItems, setCheckingItems] = useState<Set<number>>(new Set());
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    loadPurchaseOrders();
-    
-    // Subscribe to real-time updates
-    inventoryManager.subscribe('purchase_order_created', handlePurchaseOrderUpdate);
-    inventoryManager.subscribe('purchase_order_received', handlePurchaseOrderUpdate);
-    
-    return () => {
-      // Cleanup subscriptions if needed
-    };
+    loadData();
   }, []);
 
-  const loadPurchaseOrders = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const orders = await inventoryManager.getPurchaseOrders();
-      const skus = await dataService.getSKUs();
       
-      // Enrich orders with SKU data
-      const enrichedOrders = orders.map((order: any) => ({
-        ...order,
-        sku: skus.find(s => s.id === order.sku_id)
+      const [purchaseOrdersData, purchaseOrderItemsData, reorderRequestsData, skusData] = await Promise.all([
+        workflowManager.getPurchaseOrdersExtended(),
+        workflowManager.getPurchaseOrderItems(),
+        workflowManager.getReorderRequests(),
+        dataService.getSKUs()
+      ]);
+      
+      // Enrich purchase orders with items
+      const enrichedPurchaseOrders = purchaseOrdersData.map(po => ({
+        ...po,
+        items: purchaseOrderItemsData.filter(item => item.purchase_order_id === po.id)
       }));
       
-      setPurchaseOrders(enrichedOrders);
+      // Enrich purchase order items with SKU data
+      const enrichedItems = purchaseOrderItemsData.map(item => ({
+        ...item,
+        sku: skusData.find(sku => sku.id === item.sku_id)
+      }));
+      
+      setPurchaseOrders(enrichedPurchaseOrders);
+      setPurchaseOrderItems(enrichedItems);
+      setReorderRequests(reorderRequestsData);
+      setSKUs(skusData);
+      
     } catch (error) {
-      console.error('Error loading purchase orders:', error);
+      console.error('Error loading purchase orders data:', error);
       toast({
         title: "Error",
-        description: "Failed to load purchase orders",
+        description: "Failed to load purchase orders data",
         variant: "destructive",
       });
     } finally {
@@ -94,68 +103,70 @@ export default function PurchaseOrders() {
     }
   };
 
-  const handlePurchaseOrderUpdate = () => {
-    loadPurchaseOrders();
-  };
-
-  const handleReceiveOrder = async (orderId: number, quantityReceived: number) => {
+  const handleWarehouseCheck = async (item: PurchaseOrderItem, status: 'in_warehouse' | 'not_available' | 'partial_available') => {
     try {
-      await inventoryManager.processPurchaseOrderReceipt(orderId, quantityReceived);
-      toast({
-        title: "Order Received",
-        description: `Successfully received ${quantityReceived} units`,
+      setCheckingItems(prev => new Set(prev).add(item.id));
+      
+      const quantityFound = status === 'in_warehouse' ? item.quantity_ordered : 
+                          status === 'partial_available' ? Math.floor(item.quantity_ordered / 2) : 0;
+      
+      await workflowManager.checkItemInWarehouse(item.id, {
+        status,
+        quantity_found: quantityFound,
+        location: status === 'in_warehouse' ? `Aisle A-${Math.floor(Math.random() * 20) + 1}` : undefined,
+        notes: `Warehouse check performed on ${new Date().toLocaleDateString()}`
       });
-      loadPurchaseOrders();
+      
+      toast({
+        title: "Warehouse Check Complete",
+        description: status === 'in_warehouse' 
+          ? `Item ${item.sku?.sku_code} found in warehouse (${quantityFound} units)`
+          : status === 'not_available'
+            ? `Item ${item.sku?.sku_code} not available - supplier order will be created`
+            : `Item ${item.sku?.sku_code} partially available (${quantityFound} units)`,
+        variant: status === 'not_available' ? "destructive" : "default",
+      });
+      
+      // Reload data to reflect changes
+      await loadData();
+      
     } catch (error) {
-      console.error('Error receiving order:', error);
+      console.error('Error performing warehouse check:', error);
       toast({
         title: "Error",
-        description: "Failed to process order receipt",
+        description: "Failed to perform warehouse check",
         variant: "destructive",
+      });
+    } finally {
+      setCheckingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
       });
     }
   };
 
-  const filteredOrders = purchaseOrders.filter(order => {
-    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.sku?.sku_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.sku?.sku_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || order.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      case 'partial': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      case 'completed': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+      case 'pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'approved': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'sent': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'partial': return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'completed': return 'bg-green-50 text-green-700 border-green-200';
+      case 'cancelled': return 'bg-red-50 text-red-700 border-red-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
-  const getPriorityBadgeColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-700 border-red-200';
-      case 'high': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      case 'medium': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      case 'low': return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
-      default: return 'bg-[#e6f2fa] text-[#3997cd] border-[#3997cd]';
+  const getWarehouseStatusColor = (status: string) => {
+    switch (status) {
+      case 'not_checked': return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'in_warehouse': return 'bg-green-50 text-green-700 border-green-200';
+      case 'not_available': return 'bg-red-50 text-red-700 border-red-200';
+      case 'new_order_required': return 'bg-orange-50 text-orange-700 border-orange-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
-
-  const getOrderStats = () => {
-    const pending = purchaseOrders.filter(o => o.status === 'pending').length;
-    const partial = purchaseOrders.filter(o => o.status === 'partial').length;
-    const completed = purchaseOrders.filter(o => o.status === 'completed').length;
-    const totalValue = purchaseOrders.reduce((sum, o) => sum + ((o.total_cost || o.quantity_ordered * (o.unit_cost || 0))), 0);
-    
-    return { pending, partial, completed, totalValue };
-  };
-
-  const stats = getOrderStats();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -164,16 +175,33 @@ export default function PurchaseOrders() {
     }).format(amount);
   };
 
+  const filteredItems = purchaseOrderItems.filter(item => {
+    const matchesSearch = !searchTerm || 
+      item.sku?.sku_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.sku?.sku_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterStatus === 'all' || item.warehouse_status === filterStatus;
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  // Calculate summary statistics
+  const totalItems = purchaseOrderItems.length;
+  const pendingChecks = purchaseOrderItems.filter(item => item.warehouse_status === 'not_checked').length;
+  const inWarehouse = purchaseOrderItems.filter(item => item.warehouse_status === 'in_warehouse').length;
+  const needNewOrders = purchaseOrderItems.filter(item => item.warehouse_status === 'new_order_required').length;
+  const totalValue = purchaseOrderItems.reduce((sum, item) => sum + (item.unit_cost * item.quantity_ordered), 0);
+
   return (
     <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div className="space-y-1">
           <h1 className="text-4xl font-bold" style={{color: '#3997cd'}}>
-            Purchase Orders
+            Purchase Orders & Reorder Management
           </h1>
           <p className="text-lg text-muted-foreground">
-            Manage purchase orders and inventory replenishment
+            Manage reorder requests, warehouse checks, and supplier orders
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -189,7 +217,7 @@ export default function PurchaseOrders() {
             variant="outline" 
             size="sm" 
             className="bg-white/50 backdrop-blur-sm"
-            onClick={loadPurchaseOrders}
+            onClick={loadData}
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -204,11 +232,11 @@ export default function PurchaseOrders() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Pending Orders</p>
-                <p className="text-3xl font-bold">{stats.pending}</p>
-                <p className="text-blue-100 text-xs mt-1">Awaiting delivery</p>
+                <p className="text-blue-100 text-sm font-medium">Total Items</p>
+                <p className="text-3xl font-bold">{totalItems}</p>
+                <p className="text-blue-100 text-xs mt-1">Purchase order items</p>
               </div>
-              <Clock className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
+              <Package className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
@@ -217,11 +245,11 @@ export default function PurchaseOrders() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Partial Orders</p>
-                <p className="text-3xl font-bold">{stats.partial}</p>
-                <p className="text-blue-100 text-xs mt-1">Partially received</p>
+                <p className="text-blue-100 text-sm font-medium">Pending Checks</p>
+                <p className="text-3xl font-bold">{pendingChecks}</p>
+                <p className="text-blue-100 text-xs mt-1">Need warehouse verification</p>
               </div>
-              <Truck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
+              <ClipboardCheck className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
@@ -230,11 +258,11 @@ export default function PurchaseOrders() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Completed</p>
-                <p className="text-3xl font-bold">{stats.completed}</p>
-                <p className="text-blue-100 text-xs mt-1">Fully received</p>
+                <p className="text-blue-100 text-sm font-medium">In Warehouse</p>
+                <p className="text-3xl font-bold">{inWarehouse}</p>
+                <p className="text-blue-100 text-xs mt-1">Available items</p>
               </div>
-              <CheckCircle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
+              <Warehouse className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
@@ -243,11 +271,11 @@ export default function PurchaseOrders() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Value</p>
-                <p className="text-3xl font-bold">{formatCurrency(stats.totalValue)}</p>
-                <p className="text-blue-100 text-xs mt-1">All orders</p>
+                <p className="text-blue-100 text-sm font-medium">Need Orders</p>
+                <p className="text-3xl font-bold">{needNewOrders}</p>
+                <p className="text-blue-100 text-xs mt-1">Require supplier orders</p>
               </div>
-              <DollarSign className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
+              <AlertTriangle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
             </div>
           </CardContent>
         </Card>
@@ -256,47 +284,37 @@ export default function PurchaseOrders() {
       {/* Filters and Search */}
       <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
         <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+            <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search by order number, SKU name, or SKU code..."
+                  placeholder="Search by SKU code or name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/80 border-gray-200"
+                  className="pl-10 w-64"
                 />
               </div>
-            </div>
-            <div className="flex gap-3">
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-white/80 border border-gray-200 rounded-md text-sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 bg-white"
               >
                 <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="not_checked">Not Checked</option>
+                <option value="in_warehouse">In Warehouse</option>
+                <option value="not_available">Not Available</option>
+                <option value="new_order_required">New Order Required</option>
               </select>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-2 bg-white/80 border border-gray-200 rounded-md text-sm"
-              >
-                <option value="all">All Priority</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+            </div>
+            <div className="text-sm text-gray-600">
+              Total Value: <span className="font-semibold">{formatCurrency(totalValue)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Purchase Orders List */}
+      {/* Purchase Order Items */}
       {loading ? (
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-12">
@@ -305,22 +323,30 @@ export default function PurchaseOrders() {
               <h3 className="text-xl font-medium text-gray-600 mb-2">
                 Loading purchase orders...
               </h3>
+              <p className="text-gray-500">
+                Please wait while we fetch your data.
+              </p>
             </div>
           </CardContent>
         </Card>
-      ) : filteredOrders.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-12">
             <div className="text-center">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-xl font-medium text-gray-600 mb-2">
-                No Purchase Orders Found
+                No Purchase Order Items Found
               </h3>
               <p className="text-gray-500 mb-6">
-                {searchTerm || statusFilter !== "all" || priorityFilter !== "all" 
-                  ? "No orders match your current filters"
-                  : "Purchase orders will appear here when inventory reaches reorder points"}
+                {searchTerm || filterStatus !== 'all' 
+                  ? 'No items match your current filters.' 
+                  : 'Create reorder requests from the Inventory page to get started.'}
               </p>
+              {(searchTerm || filterStatus !== 'all') && (
+                <Button variant="outline" onClick={() => { setSearchTerm(''); setFilterStatus('all'); }}>
+                  Clear Filters
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -329,89 +355,105 @@ export default function PurchaseOrders() {
           <CardHeader className="border-b border-gray-200/50">
             <CardTitle className="flex items-center text-xl">
               <ShoppingCart className="h-6 w-6 mr-3" style={{color: '#3997cd'}} />
-              Purchase Orders
+              Purchase Order Items
               <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
-                {filteredOrders.length} orders
+                {filteredItems.length} items
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {filteredOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+              {filteredItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{backgroundColor: '#3997cd'}}>
-                        <Package className="h-5 w-5 text-white" />
+                        <span className="text-white font-bold text-sm">{item.sku?.brand?.name?.charAt(0) || 'P'}</span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{order.order_number}</h3>
+                        <h3 className="font-semibold text-gray-900">{item.sku?.sku_name}</h3>
                         <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">{order.sku?.sku_code}</Badge>
+                          <Badge variant="outline" className="text-xs">{item.sku?.sku_code}</Badge>
                           <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-500">{order.sku?.sku_name}</span>
+                          <span className="text-xs text-gray-500">PO Item #{item.id}</span>
                         </div>
                       </div>
                     </div>
                     <div className="ml-13">
                       <p className="text-sm text-gray-600">
-                        Quantity: {order.quantity_received}/{order.quantity_ordered} units
+                        Ordered: {item.quantity_ordered} units • Unit Cost: {formatCurrency(item.unit_cost)} • Total: {formatCurrency(item.line_total)}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        Order Date: {new Date(order.order_date).toLocaleDateString()} • 
-                        Expected: {new Date(order.expected_delivery_date).toLocaleDateString()}
-                      </p>
-                      {order.notes && (
-                        <p className="text-xs text-gray-500 mt-1">Note: {order.notes}</p>
+                      <p className="text-xs text-gray-500">Created: {new Date(item.created_at).toLocaleDateString()}</p>
+                      {item.notes && (
+                        <p className="text-xs text-gray-500 mt-1">Notes: {item.notes}</p>
                       )}
                     </div>
                   </div>
                   
-                  <div className="text-right space-y-2 min-w-[200px]">
+                  <div className="text-right space-y-2 min-w-[280px]">
                     <div className="flex items-center justify-end space-x-2">
-                      <Badge className={`text-xs ${getStatusBadgeColor(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </Badge>
-                      <Badge className={`text-xs ${getPriorityBadgeColor(order.priority)}`}>
-                        {order.priority.charAt(0).toUpperCase() + order.priority.slice(1)}
+                      <Badge variant="outline" className={getWarehouseStatusColor(item.warehouse_status)}>
+                        {item.warehouse_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </Badge>
                     </div>
                     
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold" style={{color: '#3997cd'}}>
-                        {formatCurrency(order.total_cost || (order.quantity_ordered * (order.unit_cost || 0)))}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Unit: {formatCurrency(order.unit_cost || 0)}
-                      </p>
-                    </div>
+                    {/* Warehouse Check Buttons */}
+                    {item.warehouse_status === 'not_checked' && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-600 mb-2">Check item in warehouse:</p>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                            onClick={() => handleWarehouseCheck(item, 'in_warehouse')}
+                            disabled={checkingItems.has(item.id)}
+                          >
+                            {checkingItems.has(item.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                In Stock
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 bg-red-50 border-red-300 text-red-700 hover:bg-red-100"
+                            onClick={() => handleWarehouseCheck(item, 'not_available')}
+                            disabled={checkingItems.has(item.id)}
+                          >
+                            {checkingItems.has(item.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Not Available
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     
-                    {order.status !== 'completed' && order.status !== 'cancelled' && (
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            const remainingQty = order.quantity_ordered - order.quantity_received;
-                            handleReceiveOrder(order.id, remainingQty);
-                          }}
-                          className="text-xs" style={{backgroundColor: '#e6f2fa', borderColor: '#3997cd', color: '#3997cd'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1e7dd'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e6f2fa'}
-                        >
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Receive
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setModalOpen(true);
-                          }}
-                          className="text-xs"
-                        >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
+                    {item.warehouse_status === 'in_warehouse' && (
+                      <div className="text-center">
+                        <Badge className="bg-green-100 text-green-800">
+                          ✓ Available in Warehouse
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {item.warehouse_status === 'new_order_required' && (
+                      <div className="text-center">
+                        <Badge className="bg-orange-100 text-orange-800">
+                          📦 Supplier Order Created
+                        </Badge>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Check Orders page for supplier order status
+                        </p>
                       </div>
                     )}
                   </div>
@@ -421,91 +463,6 @@ export default function PurchaseOrders() {
           </CardContent>
         </Card>
       )}
-
-      {/* Order Details Modal */}
-      <FormModal
-        isOpen={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setSelectedOrder(null);
-        }}
-        title={`Purchase Order Details - ${selectedOrder?.order_number}`}
-        maxWidth="max-w-4xl"
-      >
-        {selectedOrder && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Order Information</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <p className="text-sm"><strong>Order Number:</strong> {selectedOrder.order_number}</p>
-                    <p className="text-sm"><strong>Status:</strong> 
-                      <Badge className={`ml-2 text-xs ${getStatusBadgeColor(selectedOrder.status)}`}>
-                        {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                      </Badge>
-                    </p>
-                    <p className="text-sm"><strong>Priority:</strong>
-                      <Badge className={`ml-2 text-xs ${getPriorityBadgeColor(selectedOrder.priority)}`}>
-                        {selectedOrder.priority.charAt(0).toUpperCase() + selectedOrder.priority.slice(1)}
-                      </Badge>
-                    </p>
-                    <p className="text-sm"><strong>Order Date:</strong> {new Date(selectedOrder.order_date).toLocaleDateString()}</p>
-                    <p className="text-sm"><strong>Expected Delivery:</strong> {new Date(selectedOrder.expected_delivery_date).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">SKU Information</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <p className="text-sm"><strong>SKU Code:</strong> {selectedOrder.sku?.sku_code}</p>
-                    <p className="text-sm"><strong>SKU Name:</strong> {selectedOrder.sku?.sku_name}</p>
-                    <p className="text-sm"><strong>Brand:</strong> {selectedOrder.sku?.brand?.name}</p>
-                    <p className="text-sm"><strong>Category:</strong> {selectedOrder.sku?.category?.name}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Quantity & Pricing</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500">Ordered</p>
-                    <p className="font-semibold">{selectedOrder.quantity_ordered}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Received</p>
-                    <p className="font-semibold">{selectedOrder.quantity_received}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Unit Cost</p>
-                    <p className="font-semibold">{formatCurrency(selectedOrder.unit_cost || 0)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Total Cost</p>
-                    <p className="font-semibold" style={{color: '#3997cd'}}>
-                      {formatCurrency(selectedOrder.total_cost || (selectedOrder.quantity_ordered * (selectedOrder.unit_cost || 0)))}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {selectedOrder.notes && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm">{selectedOrder.notes}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </FormModal>
     </div>
   );
 }

@@ -2,17 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2, Trash2 } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2, Trash2, ShoppingCart, RotateCcw } from "lucide-react";
 import { dataService, SKU, Inventory as InventoryRecord } from "@/lib/database";
 import { AddSKUDrawer } from "@/components/AddSKUDrawer";
 import { FormModal } from "@/components/forms/FormModal";
-import { initializeAutoPartsData } from "@/lib/initializeAutoPartsData";
+import { initializeAutomotivePartsData } from "@/lib/automotivePartsData";
+import { workflowManager } from "@/lib/workflowExtensions";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
+  const { toast } = useToast();
   const [skus, setSKUs] = useState<SKU[]>([]);
   const [inventory, setInventory] = useState<InventoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [reorderingItems, setReorderingItems] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -26,15 +30,21 @@ export default function Inventory() {
       // Check if we have any SKUs, if not, initialize sample data
       const existingSKUs = await dataService.getSKUs();
       if (existingSKUs.length === 0) {
-        console.log('No SKUs found, initializing sample automotive data...');
-        await initializeAutoPartsData();
+        console.log('No SKUs found, initializing comprehensive automotive data...');
+        await initializeAutomotivePartsData();
       }
       
       const [skusData, inventoryData] = await Promise.all([
         dataService.getSKUs(),
         dataService.getInventory()
       ]);
-      setSKUs(skusData);
+      // Sort SKUs by creation date (newest first)
+      const sortedSKUs = skusData.sort((a, b) => {
+        const dateA = new Date(a.created_at || '1970-01-01').getTime();
+        const dateB = new Date(b.created_at || '1970-01-01').getTime();
+        return dateB - dateA;
+      });
+      setSKUs(sortedSKUs);
       setInventory(inventoryData);
     } catch (error) {
       console.error('Error loading inventory data:', error);
@@ -44,7 +54,7 @@ export default function Inventory() {
   };
 
   const handleSKUAdded = (newSKU: SKU) => {
-    setSKUs(prev => [...prev, newSKU]);
+    setSKUs(prev => [newSKU, ...prev]);
     // Reload inventory data to get the new SKU's inventory record
     loadData();
     setModalOpen(false);
@@ -138,6 +148,58 @@ export default function Inventory() {
       const stockData = getStockData(sku);
       return stockData.stock === 0;
     }).length;
+  };
+
+  // Handle reorder request
+  const handleReorderRequest = async (sku: SKU) => {
+    try {
+      setReorderingItems(prev => new Set(prev).add(sku.id));
+      
+      const stockData = getStockData(sku);
+      const inventoryRecord = inventory.find(inv => inv.sku_id === sku.id);
+      const warehouseId = inventoryRecord?.warehouse_id || 1; // Default to main warehouse
+      
+      const reason = stockData.stock === 0 ? 'out_of_stock' : 'low_stock';
+      const priority = stockData.stock === 0 ? 'high' : 'medium';
+      
+      await workflowManager.createReorderRequest({
+        sku_id: sku.id,
+        warehouse_id: warehouseId,
+        quantity_requested: stockData.maxStock - stockData.stock,
+        reason,
+        priority,
+        notes: `Reorder requested from inventory page. Current stock: ${stockData.stock}, Safety stock: ${stockData.safetyStock}`
+      });
+      
+      toast({
+        title: "Reorder Request Created",
+        description: `Reorder request created for ${sku.sku_name}. The item will appear on the Purchase Order page.`,
+        variant: "default",
+      });
+      
+      // Auto-approve the reorder request for demonstration
+      setTimeout(async () => {
+        const reorderRequests = await workflowManager.getReorderRequests();
+        const latestRequest = reorderRequests[reorderRequests.length - 1];
+        if (latestRequest) {
+          await workflowManager.updateReorderRequestStatus(latestRequest.id, 'approved');
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error creating reorder request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create reorder request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setReorderingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(sku.id);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -347,7 +409,7 @@ export default function Inventory() {
                         <p className="text-xs text-gray-500">Launch Date: {sku.launch_date ? new Date(sku.launch_date).toLocaleDateString() : 'N/A'}</p>
                       </div>
                     </div>
-                    <div className="text-right space-y-2 min-w-[160px]">
+                    <div className="text-right space-y-2 min-w-[200px]">
                       <div className="flex items-center justify-end space-x-2">
                         <Badge variant={sku.status === 'active' ? 'default' : sku.status === 'upcoming' ? 'secondary' : 'outline'}>
                           {sku.status.charAt(0).toUpperCase() + sku.status.slice(1)}
@@ -377,6 +439,43 @@ export default function Inventory() {
                           Unit: {formatCurrency(stockData.unitCost)}
                         </p>
                       </div>
+                      
+                      {/* Reorder Button - Show for out of stock or low stock items */}
+                      {(stockData.stock === 0 || stockData.stock <= stockData.safetyStock) && (
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant={stockData.stock === 0 ? "destructive" : "outline"}
+                            className={stockData.stock === 0 
+                              ? "w-full bg-red-600 hover:bg-red-700 text-white" 
+                              : "w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+                            }
+                            onClick={() => handleReorderRequest(sku)}
+                            disabled={reorderingItems.has(sku.id)}
+                          >
+                            {reorderingItems.has(sku.id) ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                {stockData.stock === 0 ? (
+                                  <>
+                                    <ShoppingCart className="h-3 w-3 mr-1" />
+                                    Reorder Now
+                                  </>
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    Reorder
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

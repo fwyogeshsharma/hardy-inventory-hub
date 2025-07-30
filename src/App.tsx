@@ -36,6 +36,7 @@ import NotFound from "./pages/NotFound";
 import WorkflowDashboard from "./pages/WorkflowDashboard";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import SalesOrders from "./pages/SalesOrders";
+import BillOfMaterials from "./pages/BillOfMaterials";
 import { RealTimeNotifications } from "./components/RealTimeNotifications";
 import { SKUIntegrationManager } from "./components/SKUIntegrationManager";
 
@@ -53,6 +54,7 @@ const EnhancedHeader = () => {
       '/inventory': 'Auto Parts Inventory',
       '/purchase-orders': 'Purchase Orders',
       '/sales-orders': 'Sales Orders',
+      '/bom': 'Bill of Materials',
       '/production': 'Parts Production', 
       '/orders': 'Order Management',
       '/warehouse': 'Warehouse Management',
@@ -71,6 +73,7 @@ const EnhancedHeader = () => {
       '/inventory': 'Track and manage all automotive parts, stock levels, and components',
       '/purchase-orders': 'Manage purchase orders and inventory replenishment',
       '/sales-orders': 'Manage customer orders and inventory allocation', 
+      '/bom': 'Manage Bill of Materials templates and kit production orders',
       '/production': 'Monitor and manage parts production and manufacturing',
       '/orders': 'Track and manage customer orders and fulfillment',
       '/warehouse': 'Manage storage locations and distribution logistics',
@@ -184,6 +187,7 @@ const App = () => (
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/purchase-orders" element={<PurchaseOrders />} />
                   <Route path="/sales-orders" element={<SalesOrders />} />
+                  <Route path="/bom" element={<BillOfMaterials />} />
                   <Route path="/production" element={<Production />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/warehouse" element={<Warehouse />} />

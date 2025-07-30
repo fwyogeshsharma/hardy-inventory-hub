@@ -213,7 +213,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                   <SelectTrigger>
                     <SelectValue placeholder="Select customer type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="distributor">
                       <div className="flex items-center space-x-2">
                         <Badge className="bg-blue-100 text-blue-700 border-blue-200">Distributor</Badge>
@@ -306,7 +306,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="low">Low Priority</SelectItem>
                     <SelectItem value="medium">Medium Priority</SelectItem>
                     <SelectItem value="high">High Priority</SelectItem>
@@ -320,7 +320,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                   <SelectTrigger>
                     <SelectValue placeholder="Select shipping method" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="standard">Standard (5-7 days)</SelectItem>
                     <SelectItem value="express">Express (2-3 days)</SelectItem>
                     <SelectItem value="overnight">Overnight (1 day)</SelectItem>
@@ -335,7 +335,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment terms" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="cod">Cash on Delivery</SelectItem>
                     <SelectItem value="prepaid">Prepaid</SelectItem>
                     <SelectItem value="net_30">Net 30 Days</SelectItem>
@@ -425,7 +425,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                       <SelectTrigger>
                         <SelectValue placeholder="Select SKU" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         {skus.map((sku) => (
                           <SelectItem key={sku.id} value={sku.id.toString()}>
                             <div className="flex items-center space-x-2">

@@ -192,7 +192,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   <SelectTrigger>
                     <SelectValue placeholder="Select vendor type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="manufacturer">
                       <div className="flex items-center space-x-2">
                         <Badge className="bg-blue-100 text-blue-700 border-blue-200">Manufacturer</Badge>
@@ -361,7 +361,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment terms" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="cod">Cash on Delivery</SelectItem>
                     <SelectItem value="net_30">Net 30 Days</SelectItem>
                     <SelectItem value="net_60">Net 60 Days</SelectItem>
@@ -375,7 +375,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   <SelectTrigger>
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="USD">USD - US Dollar</SelectItem>
                     <SelectItem value="EUR">EUR - Euro</SelectItem>
                     <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
@@ -440,7 +440,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select or type certification" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {commonCertifications.map((certification) => (
                       <SelectItem key={certification} value={certification}>
                         {certification}
@@ -499,7 +499,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select or type specialization" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {commonSpecializations.map((specialization) => (
                       <SelectItem key={specialization} value={specialization}>
                         {specialization}

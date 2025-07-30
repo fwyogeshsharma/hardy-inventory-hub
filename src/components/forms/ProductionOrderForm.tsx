@@ -157,7 +157,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   <SelectTrigger>
                     <SelectValue placeholder="Select a SKU to produce" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {skus.map((sku) => (
                       <SelectItem key={sku.id} value={sku.id.toString()}>
                         <div className="flex items-center space-x-2">
@@ -209,7 +209,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="low">
                       <div className="flex items-center space-x-2">
                         <Badge className="text-white" style={{backgroundColor: '#3997cd'}}>Low</Badge>
@@ -283,7 +283,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   <SelectTrigger>
                     <SelectValue placeholder="Select warehouse" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {warehouses.map((warehouse) => (
                       <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
                         <div className="flex flex-col">
@@ -304,7 +304,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   <SelectTrigger>
                     <SelectValue placeholder="Select shift" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     <SelectItem value="day">
                       <div className="flex items-center space-x-2">
                         <span>{getShiftIcon('day')}</span>
