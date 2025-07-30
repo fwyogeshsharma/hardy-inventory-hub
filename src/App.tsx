@@ -141,9 +141,9 @@ const EnhancedHeader = () => {
           <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-900">Product Owner-CSR</p>
-              <p className="text-xs text-gray-600">yogeshsharma@faberwork.com</p>
+              <p className="text-xs text-gray-600">Joesmith@motorcraft.com</p>
             </div>
-            <Avatar className="h-8 w-8 ring-2" style={{ringColor: '#e6f2fa'}}>
+            <Avatar className="h-8 w-8 ring-2" style={{backgroundColor: '#e6f2fa'}}>
               <AvatarFallback className="text-white text-sm font-semibold" style={{backgroundColor: '#3997cd'}}>
                 YS
               </AvatarFallback>

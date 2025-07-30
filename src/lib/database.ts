@@ -589,17 +589,905 @@ export class DataService {
   }
 
   async createSKU(skuData: {
-    sku_name: string;
-    brand_id?: number;
-    category_id?: number;
-    part_type_id?: number;
-    sku_type: 'single' | 'kit';
-    status: 'active' | 'upcoming' | 'discontinued';
-    barcode?: string;
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
     unit_of_measure: string;
-    bom_version?: string;
-    launch_date?: string;
-    components?: { component_sku_id: number; quantity: number }[];
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
+  } | {
+    flavor_id: number;
+    pack_size_id: number;
+    sku_type: string;
+    unit_of_measure: string;
+    sku_name: string;
+    launch_date: string;
+    barcode: string;
+    brand_id: number;
+    status: string
   }): Promise<SKU> {
     try {
       // Validation
