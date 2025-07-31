@@ -19,6 +19,12 @@ import POTestButton from "@/components/POTestButton";
 
 export default function ProductionPlanning() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [productionStats, setProductionStats] = useState({
+    activePlans: 0,
+    readyToProduce: 0,
+    awaitingMaterials: 0,
+    inProduction: 0
+  });
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -27,6 +33,10 @@ export default function ProductionPlanning() {
   const handleProductionStarted = () => {
     // Refresh the component when production is started
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleStatsUpdate = (stats: any) => {
+    setProductionStats(stats);
   };
 
   return (
@@ -70,7 +80,7 @@ export default function ProductionPlanning() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Active Plans</p>
-                <p className="text-3xl font-bold">-</p>
+                <p className="text-3xl font-bold">{productionStats.activePlans}</p>
                 <p className="text-blue-100 text-xs mt-1">In planning</p>
               </div>
               <Factory className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
@@ -83,7 +93,7 @@ export default function ProductionPlanning() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Ready to Produce</p>
-                <p className="text-3xl font-bold">-</p>
+                <p className="text-3xl font-bold">{productionStats.readyToProduce}</p>
                 <p className="text-blue-100 text-xs mt-1">Materials available</p>
               </div>
               <CheckCircle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
@@ -96,7 +106,7 @@ export default function ProductionPlanning() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Awaiting Materials</p>
-                <p className="text-3xl font-bold">-</p>
+                <p className="text-3xl font-bold">{productionStats.awaitingMaterials}</p>
                 <p className="text-blue-100 text-xs mt-1">POs generated</p>
               </div>
               <AlertTriangle className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
@@ -109,7 +119,7 @@ export default function ProductionPlanning() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">In Production</p>
-                <p className="text-3xl font-bold">-</p>
+                <p className="text-3xl font-bold">{productionStats.inProduction}</p>
                 <p className="text-blue-100 text-xs mt-1">Currently active</p>
               </div>
               <Package className="h-10 w-10" style={{color: 'rgba(255,255,255,0.7)'}} />
@@ -140,7 +150,10 @@ export default function ProductionPlanning() {
         </TabsList>
 
         <TabsContent value="planning" key={refreshKey}>
-          <ProductionPlanningManager onProductionStarted={handleProductionStarted} />
+          <ProductionPlanningManager 
+            onProductionStarted={handleProductionStarted} 
+            onStatsUpdate={handleStatsUpdate}
+          />
         </TabsContent>
 
         <TabsContent value="demo">

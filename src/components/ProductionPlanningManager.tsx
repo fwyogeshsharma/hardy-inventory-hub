@@ -32,17 +32,93 @@ interface ProductionPlan {
 
 interface ProductionPlanningManagerProps {
   onProductionStarted?: () => void;
+  onStatsUpdate?: (stats: {
+    activePlans: number;
+    readyToProduce: number;
+    awaitingMaterials: number;
+    inProduction: number;
+  }) => void;
 }
 
-export default function ProductionPlanningManager({ onProductionStarted }: ProductionPlanningManagerProps) {
+export default function ProductionPlanningManager({ onProductionStarted, onStatsUpdate }: ProductionPlanningManagerProps) {
   const { toast } = useToast();
   const [productionPlans, setProductionPlans] = useState<ProductionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [recheckingMaterials, setRecheckingMaterials] = useState(false);
 
   useEffect(() => {
     loadProductionPlans();
+
+    // Listen for material availability updates from Purchase Orders page
+    const handleMaterialAvailable = async (event: CustomEvent) => {
+      const { sku_id, quantity_added, item_code, item_name } = event.detail;
+      
+      console.log(`🔄 Production Planning: Material available notification received!`);
+      console.log(`📦 Item: ${item_name} (${item_code})`);
+      console.log(`📊 Quantity added: ${quantity_added} units`);
+      console.log(`🔍 Current production plans count: ${productionPlans.length}`);
+      console.log(`⏳ Awaiting materials plans: ${productionPlans.filter(p => p.status === 'awaiting_materials').length}`);
+      
+      // Re-check all awaiting materials production plans
+      await recheckAwaitingMaterialsPlans();
+      
+      toast({
+        title: "Material Available! 🎉",
+        description: `${item_name} (${quantity_added} units) is now in warehouse. Re-checking production plans...`,
+        variant: "default",
+      });
+    };
+
+    // Add event listener
+    window.addEventListener('material-available', handleMaterialAvailable as EventListener);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('material-available', handleMaterialAvailable as EventListener);
+    };
   }, []);
+
+  const recheckAwaitingMaterialsPlans = async () => {
+    try {
+      setRecheckingMaterials(true);
+      
+      // Get all production plans that are awaiting materials
+      const awaitingPlans = productionPlans.filter(plan => plan.status === 'awaiting_materials');
+      
+      if (awaitingPlans.length === 0) {
+        console.log('No production plans awaiting materials to recheck');
+        return;
+      }
+
+      console.log(`🔍 Re-checking ${awaitingPlans.length} production plans awaiting materials`);
+
+      // Re-verify inventory for each awaiting plan
+      for (const plan of awaitingPlans) {
+        await verifyInventoryForProduction(plan, true); // true = silent mode
+      }
+
+      // Reload plans to reflect any status changes
+      await loadProductionPlans();
+
+    } catch (error) {
+      console.error('Error rechecking awaiting materials plans:', error);
+    } finally {
+      setRecheckingMaterials(false);
+    }
+  };
+
+  const updateStats = (plans: ProductionPlan[]) => {
+    if (onStatsUpdate) {
+      const stats = {
+        activePlans: plans.length,
+        readyToProduce: plans.filter(p => p.status === 'production_ready').length,
+        awaitingMaterials: plans.filter(p => p.status === 'awaiting_materials').length,
+        inProduction: plans.filter(p => p.status === 'in_production').length
+      };
+      onStatsUpdate(stats);
+    }
+  };
 
   const loadProductionPlans = async () => {
     try {
@@ -102,6 +178,7 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
       }
 
       setProductionPlans(plans);
+      updateStats(plans);
     } catch (error) {
       console.error('Error loading production plans:', error);
       toast({
@@ -114,7 +191,7 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
     }
   };
 
-  const verifyInventoryForProduction = async (plan: ProductionPlan) => {
+  const verifyInventoryForProduction = async (plan: ProductionPlan, silentMode = false) => {
     try {
       setProcessingPlan(plan.id);
       
@@ -192,37 +269,55 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
       }
 
       // Update the production plans state
-      setProductionPlans(prev => 
-        prev.map(p => p.id === plan.id ? updatedPlan : p)
-      );
+      const newPlans = productionPlans.map(p => p.id === plan.id ? updatedPlan : p);
+      setProductionPlans(newPlans);
+      updateStats(newPlans);
 
-      // Show detailed success message
+      // Show detailed success message (unless in silent mode)
       const totalMissingComponents = missingMaterials.length;
       const totalShortage = missingMaterials.reduce((sum, item) => sum + item.shortage, 0);
       
-      if (missingMaterials.length > 0) {
-        toast({
-          title: "Inventory Verified & Purchase Orders Generated",
-          description: `✅ Created ${createdPOs.length} purchase orders for ${totalMissingComponents} missing components (${totalShortage} total units needed)`,
-          variant: "default",
-        });
+      if (!silentMode) {
+        if (missingMaterials.length > 0) {
+          toast({
+            title: "Inventory Verified & Purchase Orders Generated",
+            description: `✅ Created ${createdPOs.length} purchase orders for ${totalMissingComponents} missing components (${totalShortage} total units needed)`,
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Inventory Verified",
+            description: "✅ All materials available for production. Ready to start!",
+            variant: "default",
+          });
+        }
       } else {
-        toast({
-          title: "Inventory Verified",
-          description: "✅ All materials available for production. Ready to start!",
-          variant: "default",
-        });
+        // Silent mode - only log status changes
+        if (missingMaterials.length === 0 && updatedPlan.status === 'production_ready') {
+          console.log(`🎉 Production plan ${plan.id} is now ready for production! All materials available.`);
+          
+          // Show a notification for newly available plans
+          toast({
+            title: "Production Ready!",
+            description: `Materials for ${plan.bom_template.name} are now available. Production can start!`,
+            variant: "default",
+          });
+        }
       }
 
     } catch (error) {
       console.error('Error verifying inventory:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify inventory for production",
-        variant: "destructive",
-      });
+      if (!silentMode) {
+        toast({
+          title: "Error",
+          description: "Failed to verify inventory for production",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setProcessingPlan(null);
+      if (!silentMode) {
+        setProcessingPlan(null);
+      }
     }
   };
 
@@ -330,14 +425,16 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
       setProcessingPlan(plan.id);
 
       // Create kit production order
+      const salesOrderQuantity = plan.sales_order.quantity || 1;
       const productionOrderData = {
         kit_sku_id: plan.bom_template.kit_sku_id,
         bom_template_id: plan.bom_template_id,
         warehouse_id: 1, // Default warehouse
-        quantity_planned: 1, // Default quantity
+        quantity_planned: salesOrderQuantity, // Use sales order quantity
         planned_start_date: new Date().toISOString().split('T')[0],
         planned_completion_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        notes: `Production for sales order ${plan.sales_order.order_number}`
+        notes: `Production for sales order ${plan.sales_order.order_number} (${salesOrderQuantity} units)`,
+        priority: plan.sales_order.priority || 'medium'
       };
 
       const productionOrder = await workflowManager.createKitProductionOrder(productionOrderData);
@@ -360,9 +457,9 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
       }
 
       // Update state
-      setProductionPlans(prev => 
-        prev.map(p => p.id === plan.id ? updatedPlan : p)
-      );
+      const newPlans = productionPlans.map(p => p.id === plan.id ? updatedPlan : p);
+      setProductionPlans(newPlans);
+      updateStats(newPlans);
 
       toast({
         title: "Production Started",
@@ -430,6 +527,12 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
             <Badge variant="outline" className="ml-3" style={{backgroundColor: '#e6f2fa', color: '#3997cd', borderColor: '#3997cd'}}>
               {productionPlans.length} plans
             </Badge>
+            {recheckingMaterials && (
+              <Badge variant="outline" className="ml-2 bg-orange-50 text-orange-700 border-orange-300">
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Rechecking Materials
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">

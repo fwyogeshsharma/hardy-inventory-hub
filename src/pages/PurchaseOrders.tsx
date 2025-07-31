@@ -63,6 +63,42 @@ export default function PurchaseOrders() {
     loadData();
   }, []);
 
+  const updateInventoryFromWarehouseCheck = async (item: PurchaseOrderItem, quantityFound: number) => {
+    try {
+      // Update inventory levels when items are confirmed in warehouse
+      await inventoryManager.updateInventoryLevel(
+        item.sku_id, 
+        1, // Default warehouse ID
+        quantityFound, 
+        'PURCHASE_RECEIPT',
+        item.id
+      );
+      
+      console.log(`✅ Updated inventory for ${item.sku?.sku_code}: +${quantityFound} units received`);
+      
+    } catch (error) {
+      console.error('Error updating inventory from warehouse check:', error);
+      
+      // Fallback: Direct localStorage update
+      try {
+        const inventory = localStorage.getItem('inventory');
+        const inventoryData = inventory ? JSON.parse(inventory) : [];
+        
+        const existingRecord = inventoryData.find((inv: any) => inv.sku_id === item.sku_id);
+        if (existingRecord) {
+          existingRecord.quantity_available += quantityFound;
+          existingRecord.quantity_on_hand += quantityFound;
+          existingRecord.updated_at = new Date().toISOString();
+          
+          localStorage.setItem('inventory', JSON.stringify(inventoryData));
+          console.log(`✅ Fallback: Updated inventory for ${item.sku?.sku_code}: +${quantityFound} units`);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback inventory update failed:', fallbackError);
+      }
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -133,8 +169,32 @@ export default function PurchaseOrders() {
         variant: status === 'not_available' ? "destructive" : "default",
       });
       
+      // Update inventory levels if item is now in warehouse
+      if (status === 'in_warehouse' || status === 'partial_available') {
+        await updateInventoryFromWarehouseCheck(item, quantityFound);
+      }
+
       // Reload data to reflect changes
       await loadData();
+
+      // Trigger production planning update if materials are now available
+      if (status === 'in_warehouse' || status === 'partial_available') {
+        console.log(`🚀 Purchase Orders: Dispatching material-available event!`);
+        console.log(`📦 Item: ${item.sku?.sku_name} (${item.sku?.sku_code})`);
+        console.log(`📊 Quantity: ${quantityFound} units`);
+        
+        // Dispatch custom event to notify production planning
+        window.dispatchEvent(new CustomEvent('material-available', {
+          detail: {
+            sku_id: item.sku_id,
+            quantity_added: quantityFound,
+            item_code: item.sku?.sku_code,
+            item_name: item.sku?.sku_name
+          }
+        }));
+        
+        console.log(`✅ Purchase Orders: Event dispatched successfully!`);
+      }
       
     } catch (error) {
       console.error('Error performing warehouse check:', error);
