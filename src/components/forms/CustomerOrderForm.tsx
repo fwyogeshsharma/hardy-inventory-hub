@@ -185,7 +185,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Customer Information */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <User className="h-5 w-5 mr-2 text-blue-500" />
@@ -279,7 +279,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
           </Card>
 
           {/* Order Details */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -348,7 +348,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
         </div>
 
         {/* Shipping Address */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <MapPin className="h-5 w-5 mr-2 text-red-500" />
@@ -399,7 +399,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
         </Card>
 
         {/* Order Items */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center">
@@ -518,7 +518,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
         </Card>
 
         {/* Notes */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="text-lg">Order Notes</CardTitle>
           </CardHeader>
@@ -534,7 +534,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
         </Card>
 
         {/* Action Buttons */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -546,7 +546,7 @@ export const CustomerOrderForm: React.FC<CustomerOrderFormProps> = ({ onSubmit, 
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  className="bg-white/80 hover:bg-white"
+                  className="bg-white hover:bg-white"
                   disabled={isSubmitting}
                 >
                   Cancel

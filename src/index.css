@@ -10,7 +10,7 @@
     --card: hsl(0 0% 100%); /* white */
     --card-foreground: hsl(220 27% 15%); /* dark navy */
 
-    --popover: hsl(0 0% 100%); /* white */
+    --popover: hsl(0 0% 100%); /* white - ensure solid background */
     --popover-foreground: hsl(220 27% 15%); /* dark navy */
 
     --primary: hsl(210 100% 45%); /* blue */
@@ -109,5 +109,22 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Ensure all form elements have solid backgrounds */
+  [data-radix-select-content],
+  [data-radix-popover-content],
+  .select-content,
+  .popover-content {
+    background-color: hsl(0 0% 100%) !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Fix any transparent card backgrounds in forms */
+  .bg-white\/60,
+  .bg-white\/80 {
+    background-color: hsl(0 0% 100%) !important;
   }
 }

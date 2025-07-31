@@ -30,7 +30,7 @@ export const FormModal: React.FC<FormModalProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-white/60"
+              className="h-8 w-8 p-0 hover:bg-white"
             >
               <X className="h-4 w-4" />
             </Button>

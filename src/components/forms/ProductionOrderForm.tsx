@@ -141,7 +141,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Left Column */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -241,7 +241,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
           </Card>
 
           {/* Right Column */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <CalendarDays className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -344,7 +344,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
         </div>
 
         {/* Notes Section */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <AlertCircle className="h-5 w-5 mr-2 text-orange-500" />
@@ -367,7 +367,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
         </Card>
 
         {/* Action Buttons */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -379,7 +379,7 @@ export const ProductionOrderForm: React.FC<ProductionOrderFormProps> = ({ onSubm
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  className="bg-white/80 hover:bg-white"
+                  className="bg-white hover:bg-white"
                   disabled={isSubmitting}
                 >
                   Cancel

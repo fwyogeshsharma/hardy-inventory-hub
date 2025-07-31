@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FormModal } from "@/components/forms/FormModal";
+import { reportsService, ReportData } from "@/lib/reportsService";
+import { pdfExportService } from "@/lib/pdfExport";
+import { toast } from "sonner";
 import {
   BarChart,
   Bar,
@@ -57,6 +60,8 @@ export default function Reports() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportData, setReportData] = useState<Record<number, ReportData>>({});
+  const [loadingReports, setLoadingReports] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -84,224 +89,50 @@ export default function Reports() {
     );
   };
 
-  // Fake data for reports
-  const fakeReportData = {
-    1: { // Stock Ledger Report
-      title: "Stock Ledger Report",
-      data: {
-        totalItems: 15847,
-        totalValue: 2847950,
-        categories: [
-          { name: "Engine Parts", items: 4521, value: 985420, change: +8.2 },
-          { name: "Brake Components", items: 3240, value: 675890, change: +12.5 },
-          { name: "Electrical Systems", items: 2890, value: 534210, change: -3.1 },
-          { name: "Filters", items: 2156, value: 298750, change: +15.8 },
-          { name: "Fluids & Lubricants", items: 1840, value: 187430, change: +5.2 },
-          { name: "Suspension Parts", items: 1200, value: 166250, change: -1.8 }
-        ],
-        monthlyTrend: [
-          { month: 'Jan', items: 14200, value: 2650000 },
-          { month: 'Feb', items: 14800, value: 2720000 },
-          { month: 'Mar', items: 15200, value: 2780000 },
-          { month: 'Apr', items: 15600, value: 2820000 },
-          { month: 'May', items: 15847, value: 2847950 },
-        ],
-        topMovers: [
-          { sku: "BRK-PAD-001", name: "Ceramic Brake Pads", movement: 245, type: "out" },
-          { sku: "ENG-FIL-023", name: "Oil Filter Premium", movement: 189, type: "out" },
-          { sku: "ELE-BAT-012", name: "Car Battery 12V", movement: 156, type: "in" },
-          { sku: "SUS-SHK-008", name: "Shock Absorber", movement: 134, type: "out" }
-        ]
-      }
-    },
-    2: { // Low Stock Alert
-      title: "Low Stock Alert Report",
-      data: {
-        criticalItems: 23,
-        lowStockItems: 67,
-        totalAffectedValue: 145750,
-        urgentItems: [
-          { sku: "BRK-PAD-045", name: "Ceramic Brake Pads - Honda", current: 5, minimum: 25, reorderQty: 100, supplier: "ACDelco", leadTime: "3-5 days" },
-          { sku: "ENG-OIL-012", name: "Synthetic Motor Oil 5W-30", current: 12, minimum: 50, reorderQty: 200, supplier: "Mobil1", leadTime: "2-3 days" },
-          { sku: "FIL-AIR-087", name: "Air Filter - Toyota Camry", current: 8, minimum: 30, reorderQty: 150, supplier: "Mann Filter", leadTime: "4-6 days" },
-          { sku: "ELE-SPK-019", name: "Iridium Spark Plugs", current: 15, minimum: 40, reorderQty: 120, supplier: "NGK", leadTime: "5-7 days" },
-          { sku: "SUS-STR-024", name: "Front Strut Assembly", current: 3, minimum: 15, reorderQty: 50, supplier: "Monroe", leadTime: "7-10 days" }
-        ]
-      }
-    },
-    3: { // ABC Analysis (was renamed to Inventory Performance)
-      title: "Inventory Performance Report",
-      data: {
-        totalSKUs: 8945,
-        categoryA: { count: 895, value: 1847500, percentage: 65 },
-        categoryB: { count: 1789, value: 854200, percentage: 30 },
-        categoryC: { count: 6261, value: 142100, percentage: 5 },
-        topPerformers: [
-          { sku: "ENG-OIL-001", name: "Premium Motor Oil", revenue: 89450, margin: 32.5, turnover: 24.8 },
-          { sku: "BRK-PAD-002", name: "Brake Pad Set", revenue: 67890, margin: 28.9, turnover: 18.2 },
-          { sku: "FIL-OIL-003", name: "Oil Filter", revenue: 54320, margin: 35.1, turnover: 32.1 },
-          { sku: "ELE-BAT-001", name: "Car Battery", revenue: 45670, margin: 22.8, turnover: 12.4 }
-        ]
-      }
-    },
-    4: { // Sales Performance
-      title: "Sales Performance Report",
-      data: {
-        totalRevenue: 1245750,
-        monthlyGrowth: 12.8,
-        revenueByMonth: [
-          { month: 'Jan', revenue: 945000, orders: 234, customers: 89 },
-          { month: 'Feb', revenue: 1020000, orders: 267, customers: 94 },
-          { month: 'Mar', revenue: 1150000, orders: 289, customers: 102 },
-          { month: 'Apr', revenue: 1180000, orders: 301, customers: 108 },
-          { month: 'May', revenue: 1245750, orders: 324, customers: 115 }
-        ],
-        topCustomers: [
-          { name: "AutoZone Distribution", revenue: 245680, orders: 89, growth: +15.2 },
-          { name: "NAPA Auto Parts", revenue: 189420, orders: 67, growth: +8.9 },
-          { name: "O'Reilly Auto Parts", revenue: 156780, orders: 54, growth: +22.1 },
-          { name: "Advance Auto Parts", revenue: 134560, orders: 43, growth: +6.7 }
-        ],
-        categoryPerformance: [
-          { category: "Engine Parts", revenue: 387450, growth: +18.5, margin: 31.2 },
-          { category: "Brake Systems", revenue: 298760, growth: +12.1, margin: 28.7 },
-          { category: "Electrical", revenue: 234890, growth: +9.8, margin: 25.3 },
-          { category: "Filters", revenue: 189650, growth: +25.4, margin: 38.9 }
-        ]
-      }
-    },
-    5: { // Customer Analysis
-      title: "Customer Analysis Report",
-      data: {
-        totalCustomers: 1247,
-        activeCustomers: 892,
-        averageOrderValue: 1847,
-        customerSegments: [
-          { segment: "Large Distributors", count: 28, revenue: 687450, avgOrder: 3892 },
-          { segment: "Regional Retailers", count: 156, revenue: 445670, avgOrder: 1654 },
-          { segment: "Service Centers", count: 234, revenue: 298450, avgOrder: 987 },
-          { segment: "Independent Shops", count: 474, revenue: 189340, avgOrder: 456 }
-        ],
-        retentionMetrics: {
-          newCustomers: 45,
-          returningCustomers: 847,
-          churnRate: 3.2,
-          lifetimeValue: 8945
-        }
-      }
-    },
-    6: { // Profit Margin Analysis
-      title: "Profit Margin Analysis Report",
-      data: {
-        overallMargin: 29.8,
-        totalProfit: 724580,
-        marginByCategory: [
-          { category: "Filters", margin: 42.5, profit: 126780, trend: +2.8 },
-          { category: "Fluids", margin: 38.9, profit: 89450, trend: +1.2 },
-          { category: "Engine Parts", margin: 31.2, profit: 198760, trend: -0.5 },
-          { category: "Electrical", margin: 28.7, profit: 156890, trend: +3.1 },
-          { category: "Brake Systems", margin: 25.3, profit: 134560, trend: +1.8 },
-          { category: "Suspension", margin: 22.1, profit: 87430, trend: -1.2 }
-        ],
-        topProfitableSKUs: [
-          { sku: "FIL-AIR-001", name: "Premium Air Filter", margin: 48.5, profit: 12450 },
-          { sku: "FLD-OIL-002", name: "Synthetic Oil", margin: 45.2, profit: 15670 },
-          { sku: "ENG-SPK-003", name: "Platinum Spark Plugs", margin: 41.8, profit: 9890 }
-        ]
-      }
-    },
-    7: { // Vendor Performance
-      title: "Vendor Performance Report",
-      data: {
-        totalVendors: 48,
-        activeVendors: 32,
-        averageRating: 4.2,
-        topVendors: [
-          { name: "ACDelco Supply Chain", rating: 4.8, onTime: 96, orders: 145, value: 245670 },
-          { name: "Bosch Automotive", rating: 4.9, onTime: 98, orders: 123, value: 198450 },
-          { name: "Monroe Ride Solutions", rating: 4.6, onTime: 94, orders: 89, value: 156780 },
-          { name: "NGK Spark Plug Supply", rating: 4.7, onTime: 92, orders: 67, value: 134560 }
-        ],
-        performanceMetrics: {
-          avgDeliveryTime: 4.2,
-          qualityRating: 4.1,
-          priceCompetitiveness: 3.8,
-          totalPurchaseValue: 1547890
-        }
-      }
-    },
-    8: { // Order Fulfillment
-      title: "Order Fulfillment Report",
-      data: {
-        totalOrders: 2847,
-        fulfilledOrders: 2634,
-        fulfillmentRate: 92.5,
-        avgProcessingTime: 2.3,
-        orderMetrics: [
-          { status: "Delivered", count: 2456, percentage: 86.3 },
-          { status: "In Transit", count: 178, percentage: 6.2 },
-          { status: "Processing", count: 124, percentage: 4.4 },
-          { status: "Pending", count: 89, percentage: 3.1 }
-        ],
-        performanceByRegion: [
-          { region: "Northeast", orders: 847, onTime: 94.2, avgTime: 2.1 },
-          { region: "Southeast", orders: 692, onTime: 91.8, avgTime: 2.4 },
-          { region: "Midwest", orders: 578, onTime: 93.5, avgTime: 2.2 },
-          { region: "West Coast", orders: 730, onTime: 89.7, avgTime: 2.6 }
-        ]
-      }
-    },
-    9: { // Production Efficiency
-      title: "Production Efficiency Report",
-      data: {
-        overallEfficiency: 87.4,
-        totalOutput: 15670,
-        defectRate: 0.8,
-        efficiencyMetrics: [
-          { department: "Engine Assembly", efficiency: 91.2, output: 4567, defects: 12 },
-          { department: "Brake Manufacturing", efficiency: 88.9, output: 3890, defects: 18 },
-          { department: "Electrical Components", efficiency: 85.1, output: 2890, defects: 15 },
-          { department: "Filter Production", efficiency: 92.8, output: 2456, defects: 8 },
-          { department: "Quality Control", efficiency: 94.5, throughput: 1867, rejections: 23 }
-        ],
-        resourceUtilization: {
-          machinery: 84.2,
-          labor: 89.1,
-          materials: 91.7,
-          energy: 76.8
-        }
+  // Real data is now loaded dynamically from reportsService
+
+  const handleViewReport = async (report) => {
+    if (!reportData[report.id] && !loadingReports[report.id]) {
+      setLoadingReports(prev => ({ ...prev, [report.id]: true }));
+      
+      try {
+        const data = await reportsService.getReport(report.id);
+        setReportData(prev => ({ ...prev, [report.id]: data }));
+      } catch (error) {
+        console.error('Error loading report data:', error);
+        toast.error('Failed to load report data');
+      } finally {
+        setLoadingReports(prev => ({ ...prev, [report.id]: false }));
       }
     }
-  };
-
-  const handleViewReport = (report) => {
+    
     setSelectedReport(report);
     setReportModalOpen(true);
   };
 
   const handleExportReport = async (report) => {
-    // Create a fake PDF blob for download
-    const fakeData = fakeReportData[report.id];
-    const reportContent = `
-${fakeData.title}
-Generated on: ${new Date().toLocaleDateString()}
-
-Report Summary:
-${JSON.stringify(fakeData.data, null, 2)}
-
-This is a demonstration report with realistic automotive parts inventory data.
-Generated by Hardy Inventory Hub - Automotive Parts Management System.
-    `;
-    
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${report.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      toast.info('Generating PDF report...');
+      
+      // Get or load report data
+      let data = reportData[report.id];
+      if (!data) {
+        data = await reportsService.getReport(report.id);
+        setReportData(prev => ({ ...prev, [report.id]: data }));
+      }
+      
+      // Export using PDF service
+      await pdfExportService.exportReportToPDF(data, {
+        filename: `${report.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+        includeHeader: true,
+        includeFooter: true
+      });
+      
+      toast.success('Report exported successfully!');
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast.error('Failed to export report');
+    }
   };
 
   const reportCategories = [
@@ -648,17 +479,17 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
           setReportModalOpen(false);
           setSelectedReport(null);
         }}
-        title={selectedReport ? fakeReportData[selectedReport.id]?.title : "Report Details"}
+        title={selectedReport ? (reportData[selectedReport.id]?.title || selectedReport.name) : "Report Details"}
         maxWidth="max-w-6xl"
       >
-        {selectedReport && fakeReportData[selectedReport.id] && (
+        {selectedReport && (reportData[selectedReport.id] || loadingReports[selectedReport.id]) && (
           <div className="space-y-6">
             {/* Report Header */}
             <div className="bg-gradient-to-r from-[#3997cd] to-[#2d7aad] text-white p-6 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold">{fakeReportData[selectedReport.id].title}</h2>
-                  <p className="text-blue-100 mt-1">Generated on {new Date().toLocaleDateString()}</p>
+                  <h2 className="text-2xl font-bold">{reportData[selectedReport.id]?.title || selectedReport.name}</h2>
+                  <p className="text-blue-100 mt-1">Generated on {reportData[selectedReport.id]?.generatedAt ? new Date(reportData[selectedReport.id].generatedAt).toLocaleDateString() : new Date().toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-blue-100 text-sm">Report ID: {selectedReport.id}</p>
@@ -669,8 +500,17 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
 
             {/* Report Content */}
             <div className="grid gap-6">
+              {loadingReports[selectedReport.id] && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin text-[#3997cd] mx-auto mb-4" />
+                    <p className="text-gray-600">Loading report data...</p>
+                  </div>
+                </div>
+              )}
+              
               {/* Render different content based on report type */}
-              {selectedReport.id === 1 && ( // Stock Ledger Report
+              {!loadingReports[selectedReport.id] && reportData[selectedReport.id] && selectedReport.id === 1 && ( // Stock Ledger Report
                 <div className="space-y-6">
                   {/* KPI Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -679,7 +519,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-blue-700">Total Items</p>
-                            <p className="text-2xl font-bold text-[#3997cd]">{fakeReportData[1].data.totalItems.toLocaleString()}</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[1]?.data.totalItems?.toLocaleString() || '0'}</p>
                           </div>
                           <Package className="h-8 w-8 text-blue-400" />
                         </div>
@@ -691,7 +531,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-green-700">Total Value</p>
-                            <p className="text-2xl font-bold text-green-600">${(fakeReportData[1].data.totalValue / 1000000).toFixed(2)}M</p>
+                            <p className="text-2xl font-bold text-green-600">${((reportData[1]?.data.totalValue || 0) / 1000000).toFixed(2)}M</p>
                           </div>
                           <DollarSign className="h-8 w-8 text-green-400" />
                         </div>
@@ -703,7 +543,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-purple-700">Categories</p>
-                            <p className="text-2xl font-bold text-purple-600">{fakeReportData[1].data.categories.length}</p>
+                            <p className="text-2xl font-bold text-purple-600">{reportData[1]?.data.categories?.length || 0}</p>
                           </div>
                           <BarChart3 className="h-8 w-8 text-purple-400" />
                         </div>
@@ -715,7 +555,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-orange-700">Avg Value/Item</p>
-                            <p className="text-2xl font-bold text-orange-600">${Math.round(fakeReportData[1].data.totalValue / fakeReportData[1].data.totalItems)}</p>
+                            <p className="text-2xl font-bold text-orange-600">${Math.round((reportData[1]?.data.totalValue || 0) / (reportData[1]?.data.totalItems || 1))}</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-orange-400" />
                         </div>
@@ -736,7 +576,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={fakeReportData[1].data.monthlyTrend}>
+                          <LineChart data={reportData[1]?.data.monthlyTrend || []}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis dataKey="month" stroke="#666" />
                             <YAxis stroke="#666" />
@@ -782,7 +622,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <ResponsiveContainer width="100%" height={300}>
                           <RechartsPieChart>
                             <Pie
-                              data={fakeReportData[1].data.categories}
+                              data={reportData[1]?.data.categories || []}
                               dataKey="value"
                               nameKey="name"
                               cx="50%"
@@ -790,7 +630,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                               outerRadius={100}
                               label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                             >
-                              {fakeReportData[1].data.categories.map((entry, index) => (
+                              {(reportData[1]?.data.categories || []).map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                               ))}
                             </Pie>
@@ -823,7 +663,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                             </tr>
                           </thead>
                           <tbody>
-                            {fakeReportData[1].data.categories.map((cat, idx) => (
+                            {(reportData[1]?.data.categories || []).map((cat, idx) => (
                               <tr key={idx} className="border-b hover:bg-gray-50">
                                 <td className="py-3 px-4">
                                   <div className="flex items-center">
@@ -841,7 +681,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                                   <TrendIndicator value={cat.change} isPercentage={true} />
                                 </td>
                                 <td className="py-3 px-4 text-right font-medium">
-                                  {((cat.value / fakeReportData[1].data.totalValue) * 100).toFixed(1)}%
+                                  {(((cat.value || 0) / (reportData[1]?.data.totalValue || 1)) * 100).toFixed(1)}%
                                 </td>
                               </tr>
                             ))}
@@ -862,7 +702,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-red-700">Critical Items</p>
-                            <p className="text-2xl font-bold text-red-600">{fakeReportData[2].data.criticalItems}</p>
+                            <p className="text-2xl font-bold text-red-600">{reportData[2]?.data.criticalItems || 0}</p>
                           </div>
                           <AlertTriangle className="h-8 w-8 text-red-400" />
                         </div>
@@ -874,7 +714,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-orange-700">Low Stock Items</p>
-                            <p className="text-2xl font-bold text-orange-600">{fakeReportData[2].data.lowStockItems}</p>
+                            <p className="text-2xl font-bold text-orange-600">{reportData[2]?.data.lowStockItems || 0}</p>
                           </div>
                           <Package className="h-8 w-8 text-orange-400" />
                         </div>
@@ -886,7 +726,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-blue-700">Affected Value</p>
-                            <p className="text-2xl font-bold text-[#3997cd]">${(fakeReportData[2].data.totalAffectedValue / 1000).toFixed(0)}K</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">${((reportData[2]?.data.totalAffectedValue || 0) / 1000).toFixed(0)}K</p>
                           </div>
                           <DollarSign className="h-8 w-8 text-blue-400" />
                         </div>
@@ -917,7 +757,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={fakeReportData[2].data.urgentItems}>
+                        <BarChart data={reportData[2]?.data.urgentItems || []}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis 
                             dataKey="sku" 
@@ -957,7 +797,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {fakeReportData[2].data.urgentItems.map((item, idx) => (
+                        {(reportData[2]?.data.urgentItems || []).map((item, idx) => (
                           <div key={idx} className={`rounded-lg p-4 border-l-4 ${
                             item.current <= 5 ? 'border-red-500 bg-red-50' : 
                             item.current <= 15 ? 'border-orange-500 bg-orange-50' : 
@@ -1043,11 +883,11 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-emerald-700">Total Revenue</p>
-                            <p className="text-2xl font-bold text-emerald-600">${(fakeReportData[4].data.totalRevenue / 1000000).toFixed(2)}M</p>
+                            <p className="text-2xl font-bold text-emerald-600">${((reportData[4]?.data.totalRevenue || 0) / 1000000).toFixed(2)}M</p>
                           </div>
                           <DollarSign className="h-8 w-8 text-emerald-400" />
                         </div>
-                        <TrendIndicator value={fakeReportData[4].data.monthlyGrowth} isPercentage={true} />
+                        <TrendIndicator value={reportData[4]?.data.monthlyGrowth || 0} isPercentage={true} />
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -1055,7 +895,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-blue-700">Total Orders</p>
-                            <p className="text-2xl font-bold text-[#3997cd]">{fakeReportData[4].data.revenueByMonth[4].orders}</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[4]?.data.revenueByMonth?.[4]?.orders || 0}</p>
                           </div>
                           <ShoppingCart className="h-8 w-8 text-blue-400" />
                         </div>
@@ -1067,7 +907,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-purple-700">Active Customers</p>
-                            <p className="text-2xl font-bold text-purple-600">{fakeReportData[4].data.revenueByMonth[4].customers}</p>
+                            <p className="text-2xl font-bold text-purple-600">{reportData[4]?.data.revenueByMonth?.[4]?.customers || 0}</p>
                           </div>
                           <Users className="h-8 w-8 text-purple-400" />
                         </div>
@@ -1079,7 +919,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-orange-700">Avg Order Value</p>
-                            <p className="text-2xl font-bold text-orange-600">${Math.round(fakeReportData[4].data.totalRevenue / fakeReportData[4].data.revenueByMonth[4].orders)}</p>
+                            <p className="text-2xl font-bold text-orange-600">${Math.round((reportData[4]?.data.totalRevenue || 0) / (reportData[4]?.data.revenueByMonth?.[4]?.orders || 1))}</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-orange-400" />
                         </div>
@@ -1100,7 +940,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                          <ComposedChart data={fakeReportData[4].data.revenueByMonth}>
+                          <ComposedChart data={reportData[4]?.data.revenueByMonth || []}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis dataKey="month" stroke="#666" />
                             <YAxis stroke="#666" />
@@ -1138,7 +978,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={fakeReportData[4].data.categoryPerformance} layout="horizontal">
+                          <BarChart data={reportData[4]?.data.categoryPerformance || []} layout="horizontal">
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis type="number" stroke="#666" />
                             <YAxis dataKey="category" type="category" stroke="#666" width={100} />
@@ -1179,7 +1019,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                             </tr>
                           </thead>
                           <tbody>
-                            {fakeReportData[4].data.topCustomers.map((customer, idx) => (
+                            {(reportData[4]?.data.topCustomers || []).map((customer, idx) => (
                               <tr key={idx} className="border-b hover:bg-gray-50">
                                 <td className="py-3 px-4">
                                   <div className="flex items-center">
@@ -1196,7 +1036,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                                   <TrendIndicator value={customer.growth} isPercentage={true} />
                                 </td>
                                 <td className="py-3 px-4 text-right font-medium">
-                                  {((customer.revenue / fakeReportData[4].data.totalRevenue) * 100).toFixed(1)}%
+                                  {(((customer.revenue || 0) / (reportData[4]?.data.totalRevenue || 1)) * 100).toFixed(1)}%
                                 </td>
                               </tr>
                             ))}
@@ -1209,7 +1049,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
               )}
 
               {/* Generic data display for other reports */}
-              {![1, 2, 4].includes(selectedReport.id) && (
+              {!loadingReports[selectedReport.id] && reportData[selectedReport.id] && ![1, 2, 4].includes(selectedReport.id) && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Report Data</CardTitle>
@@ -1217,7 +1057,7 @@ Generated by Hardy Inventory Hub - Automotive Parts Management System.
                   <CardContent>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <pre className="text-sm whitespace-pre-wrap">
-                        {JSON.stringify(fakeReportData[selectedReport.id].data, null, 2)}
+                        {JSON.stringify(reportData[selectedReport.id]?.data || {}, null, 2)}
                       </pre>
                     </div>
                   </CardContent>

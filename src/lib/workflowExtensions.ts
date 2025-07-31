@@ -503,6 +503,31 @@ export class WorkflowManager {
     }
   }
 
+  async resumeSupplierOrderWorkflow(orderId: number, reason: string): Promise<void> {
+    try {
+      const orders = localStorage.getItem('supplier_orders');
+      const existingOrders = orders ? JSON.parse(orders) : [];
+      
+      const orderIndex = existingOrders.findIndex((o: any) => o.id === orderId);
+      if (orderIndex === -1) {
+        throw new Error(`Supplier order ${orderId} not found`);
+      }
+      
+      existingOrders[orderIndex] = {
+        ...existingOrders[orderIndex],
+        workflow_status: 'active',
+        pause_reason: null,
+        resume_reason: reason,
+        updated_at: new Date().toISOString()
+      };
+      
+      localStorage.setItem('supplier_orders', JSON.stringify(existingOrders));
+    } catch (error) {
+      console.error('Error resuming supplier order workflow:', error);
+      throw error;
+    }
+  }
+
   // ==========================================
   // BILL OF MATERIALS (BOM) MANAGEMENT
   // ==========================================

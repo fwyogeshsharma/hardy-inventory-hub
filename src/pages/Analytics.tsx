@@ -20,7 +20,12 @@ import {
   Legend,
   Pie,
   RadialBarChart,
-  RadialBar
+  RadialBar,
+  Scatter,
+  ScatterChart,
+  ZAxis,
+  ReferenceLine,
+  Treemap
 } from 'recharts';
 import { 
   TrendingUp, 
@@ -63,12 +68,14 @@ export default function Analytics() {
   
   // Enhanced analytics data for charts
   const monthlyRevenueData = [
-    { month: 'Jan', revenue: 2400000, orders: 234, customers: 89, profit: 720000 },
-    { month: 'Feb', revenue: 2650000, orders: 267, customers: 94, profit: 795000 },
-    { month: 'Mar', revenue: 2780000, orders: 289, customers: 102, profit: 834000 },
-    { month: 'Apr', revenue: 2820000, orders: 301, customers: 108, profit: 846000 },
-    { month: 'May', revenue: 2800000, orders: 324, customers: 115, profit: 840000 },
-    { month: 'Jun', revenue: 2950000, orders: 342, customers: 121, profit: 885000 }
+    { month: 'Jan', revenue: 2400000, orders: 234, customers: 89, profit: 720000, profitMargin: 30.0, growth: 5.2 },
+    { month: 'Feb', revenue: 2650000, orders: 267, customers: 94, profit: 795000, profitMargin: 30.0, growth: 10.4 },
+    { month: 'Mar', revenue: 2780000, orders: 289, customers: 102, profit: 834000, profitMargin: 30.0, growth: 4.9 },
+    { month: 'Apr', revenue: 2820000, orders: 301, customers: 108, profit: 846000, profitMargin: 30.0, growth: 1.4 },
+    { month: 'May', revenue: 2800000, orders: 324, customers: 115, profit: 840000, profitMargin: 30.0, growth: -0.7 },
+    { month: 'Jun', revenue: 2950000, orders: 342, customers: 121, profit: 885000, profitMargin: 30.0, growth: 5.4 },
+    { month: 'Jul', revenue: 3100000, orders: 356, customers: 128, profit: 930000, profitMargin: 30.0, growth: 5.1 },
+    { month: 'Aug', revenue: 3250000, orders: 378, customers: 135, profit: 975000, profitMargin: 30.0, growth: 4.8 }
   ];
 
   const categoryDistributionData = [
@@ -80,27 +87,32 @@ export default function Analytics() {
   ];
 
   const performanceScoreData = [
-    { name: 'Revenue Growth', score: 85, target: 90, fill: '#3997cd' },
-    { name: 'Customer Satisfaction', score: 92, target: 95, fill: '#2d7aad' },
-    { name: 'Inventory Efficiency', score: 78, target: 85, fill: '#1e5f8a' },
-    { name: 'Order Fulfillment', score: 96, target: 98, fill: '#4a90e2' }
+    { name: 'Revenue Growth', score: 85, target: 90, fill: '#3997cd', angle: 306, fullMark: 100 },
+    { name: 'Customer Satisfaction', score: 92, target: 95, fill: '#2d7aad', angle: 331.2, fullMark: 100 },
+    { name: 'Inventory Efficiency', score: 78, target: 85, fill: '#1e5f8a', angle: 280.8, fullMark: 100 },
+    { name: 'Order Fulfillment', score: 96, target: 98, fill: '#4a90e2', angle: 345.6, fullMark: 100 },
+    { name: 'Quality Score', score: 94, target: 96, fill: '#6bb6ff', angle: 338.4, fullMark: 100 },
+    { name: 'Vendor Performance', score: 88, target: 92, fill: '#5c85d6', angle: 316.8, fullMark: 100 }
   ];
 
   const inventoryTurnoverData = [
-    { category: 'Engine Parts', turnover: 4.2, value: 985420, optimal: 4.5 },
-    { category: 'Brake Components', turnover: 3.8, value: 675890, optimal: 4.0 },
-    { category: 'Electrical', turnover: 3.4, value: 534210, optimal: 3.5 },
-    { category: 'Filters', turnover: 5.1, value: 298750, optimal: 5.0 },
-    { category: 'Suspension', turnover: 2.9, value: 166250, optimal: 3.2 }
+    { category: 'Engine Parts', turnover: 4.2, value: 985420, optimal: 4.5, velocity: 'High', stockDays: 87 },
+    { category: 'Brake Components', turnover: 3.8, value: 675890, optimal: 4.0, velocity: 'Medium', stockDays: 96 },
+    { category: 'Electrical', turnover: 3.4, value: 534210, optimal: 3.5, velocity: 'Medium', stockDays: 107 },
+    { category: 'Filters', turnover: 5.1, value: 298750, optimal: 5.0, velocity: 'High', stockDays: 72 },
+    { category: 'Suspension', turnover: 2.9, value: 166250, optimal: 3.2, velocity: 'Low', stockDays: 126 },
+    { category: 'Fluids', turnover: 6.2, value: 145000, optimal: 6.0, velocity: 'Very High', stockDays: 59 }
   ];
 
   const customerGrowthData = [
-    { month: 'Jan', newCustomers: 23, totalCustomers: 891, retention: 87.2 },
-    { month: 'Feb', newCustomers: 31, totalCustomers: 922, retention: 88.1 },
-    { month: 'Mar', newCustomers: 28, totalCustomers: 950, retention: 87.8 },
-    { month: 'Apr', newCustomers: 35, totalCustomers: 985, retention: 89.2 },
-    { month: 'May', newCustomers: 42, totalCustomers: 1027, retention: 88.9 },
-    { month: 'Jun', newCustomers: 38, totalCustomers: 1065, retention: 89.5 }
+    { month: 'Jan', newCustomers: 23, totalCustomers: 891, retention: 87.2, churn: 12.8, revenue: 2400000 },
+    { month: 'Feb', newCustomers: 31, totalCustomers: 922, retention: 88.1, churn: 11.9, revenue: 2650000 },
+    { month: 'Mar', newCustomers: 28, totalCustomers: 950, retention: 87.8, churn: 12.2, revenue: 2780000 },
+    { month: 'Apr', newCustomers: 35, totalCustomers: 985, retention: 89.2, churn: 10.8, revenue: 2820000 },
+    { month: 'May', newCustomers: 42, totalCustomers: 1027, retention: 88.9, churn: 11.1, revenue: 2800000 },
+    { month: 'Jun', newCustomers: 38, totalCustomers: 1065, retention: 89.5, churn: 10.5, revenue: 2950000 },
+    { month: 'Jul', newCustomers: 45, totalCustomers: 1110, retention: 90.1, churn: 9.9, revenue: 3100000 },
+    { month: 'Aug', newCustomers: 52, totalCustomers: 1162, retention: 90.8, churn: 9.2, revenue: 3250000 }
   ];
 
   const kpiMetrics = [
@@ -223,6 +235,43 @@ export default function Analytics() {
     return amount;
   };
 
+  // Custom Treemap Content Component
+  const CustomTreemapContent = (props: any) => {
+    const { root, depth, x, y, width, height, index, payload, colors, rank, name } = props;
+    
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          style={{
+            fill: CHART_COLORS[index % CHART_COLORS.length],
+            stroke: '#fff',
+            strokeWidth: 2,
+            strokeOpacity: 1,
+          }}
+        />
+        {width > 60 && height > 40 && (
+          <text x={x + width / 2} y={y + height / 2} textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
+            {name}
+          </text>
+        )}
+        {width > 60 && height > 60 && (
+          <text x={x + width / 2} y={y + height / 2 + 16} textAnchor="middle" fill="white" fontSize="10">
+            ${(payload.value / 1000000).toFixed(1)}M
+          </text>
+        )}
+        {width > 60 && height > 80 && (
+          <text x={x + width / 2} y={y + height / 2 + 30} textAnchor="middle" fill="white" fontSize="10">
+            {payload.percentage}%
+          </text>
+        )}
+      </g>
+    );
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
@@ -236,19 +285,19 @@ export default function Analytics() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Badge variant="outline" className="bg-white/50 backdrop-blur-sm">
+          <Badge variant="outline" className="bg-white">
             <Timer className="h-3 w-3 mr-1" />
             {currentTime.toLocaleTimeString('en-US', { hour12: false })}
           </Badge>
-          <Badge variant="outline" className="bg-white/50 backdrop-blur-sm">
+          <Badge variant="outline" className="bg-white">
             <Calendar className="h-3 w-3 mr-1" />
             {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </Badge>
-          <Button variant="outline" size="sm" className="bg-white/50 backdrop-blur-sm">
+          <Button variant="outline" size="sm" className="bg-white">
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" size="sm" className="bg-white/50 backdrop-blur-sm">
+          <Button variant="outline" size="sm" className="bg-white">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -291,7 +340,7 @@ export default function Analytics() {
         {analyticsCategories.map((category, categoryIndex) => {
           const IconComponent = category.icon;
           return (
-            <Card key={categoryIndex} className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+            <Card key={categoryIndex} className="bg-white border-0 shadow-lg">
               <CardHeader className="border-b border-gray-200/50">
                 <CardTitle className="flex items-center text-xl">
                   <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${category.color} flex items-center justify-center mr-3`}>
@@ -327,7 +376,7 @@ export default function Analytics() {
       </div>
 
       {/* Top Performing Parts */}
-      <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+      <Card className="bg-white border-0 shadow-lg">
         <CardHeader className="border-b border-gray-200/50">
           <CardTitle className="flex items-center text-xl">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#3997cd] to-[#2d7aad] flex items-center justify-center mr-3">
@@ -367,7 +416,7 @@ export default function Analytics() {
       {/* Interactive Charts Section */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue Trend Chart */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -375,72 +424,97 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <ComposedChart data={monthlyRevenueData}>
+            <ResponsiveContainer width="100%" height={400}>
+              <AreaChart data={monthlyRevenueData}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3997cd" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3997cd" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2d7aad" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#2d7aad" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#666" />
-                <YAxis yAxisId="revenue" stroke="#666" />
-                <YAxis yAxisId="orders" orientation="right" stroke="#666" />
+                <YAxis stroke="#666" />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#fff', 
                     border: '1px solid #3997cd',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                   formatter={(value, name) => [
                     name === 'revenue' ? `$${(value/1000000).toFixed(2)}M` : 
-                    name === 'profit' ? `$${(value/1000000).toFixed(2)}M` : value,
-                    name === 'revenue' ? 'Revenue' : name === 'profit' ? 'Profit' : 'Orders'
+                    name === 'profit' ? `$${(value/1000000).toFixed(2)}M` : 
+                    name === 'growth' ? `${value}%` : value,
+                    name === 'revenue' ? 'Revenue' : 
+                    name === 'profit' ? 'Profit' : 
+                    name === 'growth' ? 'Growth Rate' : name
                   ]}
                 />
-                <Bar yAxisId="revenue" dataKey="revenue" fill="#3997cd" radius={[4, 4, 0, 0]} />
-                <Line 
-                  yAxisId="orders" 
+                <Area 
                   type="monotone" 
-                  dataKey="orders" 
-                  stroke="#2d7aad" 
+                  dataKey="revenue" 
+                  stroke="#3997cd" 
+                  fillOpacity={1} 
+                  fill="url(#revenueGradient)" 
                   strokeWidth={3}
-                  dot={{ fill: '#2d7aad', strokeWidth: 2, r: 4 }}
                 />
-                <Line 
-                  yAxisId="revenue" 
+                <Area 
                   type="monotone" 
                   dataKey="profit" 
+                  stroke="#2d7aad" 
+                  fillOpacity={1} 
+                  fill="url(#profitGradient)" 
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="growth" 
                   stroke="#1e5f8a" 
                   strokeWidth={2}
+                  strokeDasharray="5 5"
                   dot={{ fill: '#1e5f8a', strokeWidth: 2, r: 3 }}
                 />
-              </ComposedChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Category Distribution Pie Chart */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        {/* Enhanced Category Treemap */}
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <PieChart className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
-              Sales by Category Distribution
+              <BarChart3 className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
+              Category Performance Treemap
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <RechartsPieChart>
-                <Pie
-                  data={categoryDistributionData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  label={({ name, percentage }) => `${name} ${percentage}%`}
-                >
-                  {categoryDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`$${(value/1000000).toFixed(2)}M`, 'Revenue']} />
-              </RechartsPieChart>
+            <ResponsiveContainer width="100%" height={400}>
+              <Treemap
+                data={categoryDistributionData}
+                dataKey="value"
+                stroke="#fff"
+                strokeWidth={2}
+                content={<CustomTreemapContent />}
+              >
+                <Tooltip 
+                  formatter={(value, name) => [
+                    `$${(value/1000000).toFixed(2)}M`,
+                    'Revenue'
+                  ]}
+                  labelFormatter={(label) => `Category: ${label}`}
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #3997cd',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+              </Treemap>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -448,17 +522,23 @@ export default function Analytics() {
 
       {/* Additional Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Customer Growth Chart */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        {/* Enhanced Customer Analytics Chart */}
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Users className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
-              Customer Growth & Retention
+              Customer Analytics Dashboard
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={350}>
               <ComposedChart data={customerGrowthData}>
+                <defs>
+                  <linearGradient id="customerGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3997cd" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3997cd" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#666" />
                 <YAxis yAxisId="customers" stroke="#666" />
@@ -467,15 +547,26 @@ export default function Analytics() {
                   contentStyle={{ 
                     backgroundColor: '#fff', 
                     border: '1px solid #3997cd',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                   formatter={(value, name) => [
-                    name === 'retention' ? `${value}%` : value,
+                    name === 'retention' || name === 'churn' ? `${value}%` : value,
                     name === 'newCustomers' ? 'New Customers' : 
-                    name === 'totalCustomers' ? 'Total Customers' : 'Retention Rate'
+                    name === 'totalCustomers' ? 'Total Customers' : 
+                    name === 'retention' ? 'Retention Rate' : 'Churn Rate'
                   ]}
                 />
-                <Bar yAxisId="customers" dataKey="newCustomers" fill="#3997cd" radius={[4, 4, 0, 0]} />
+                <ReferenceLine yAxisId="retention" y={90} stroke="#ff6b6b" strokeDasharray="8 8" label={{ value: "Target 90%", position: "topRight" }} />
+                <Area 
+                  yAxisId="customers"
+                  type="monotone" 
+                  dataKey="newCustomers" 
+                  stroke="#3997cd" 
+                  fillOpacity={1} 
+                  fill="url(#customerGradient)" 
+                  strokeWidth={2}
+                />
                 <Line 
                   yAxisId="customers" 
                   type="monotone" 
@@ -489,84 +580,186 @@ export default function Analytics() {
                   type="monotone" 
                   dataKey="retention" 
                   stroke="#1e5f8a" 
+                  strokeWidth={3}
+                  dot={{ fill: '#1e5f8a', strokeWidth: 2, r: 4 }}
+                />
+                <Line 
+                  yAxisId="retention" 
+                  type="monotone" 
+                  dataKey="churn" 
+                  stroke="#ff6b6b" 
                   strokeWidth={2}
-                  dot={{ fill: '#1e5f8a', strokeWidth: 2, r: 3 }}
+                  strokeDasharray="3 3"
+                  dot={{ fill: '#ff6b6b', strokeWidth: 2, r: 3 }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Inventory Turnover Chart */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        {/* Advanced Inventory Scatter Plot */}
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
-              Inventory Turnover Analysis
+              Inventory Performance Matrix
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={inventoryTurnoverData} layout="horizontal">
+            <ResponsiveContainer width="100%" height={350}>
+              <ScatterChart data={inventoryTurnoverData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" stroke="#666" />
-                <YAxis dataKey="category" type="category" stroke="#666" width={120} />
+                <XAxis 
+                  type="number" 
+                  dataKey="turnover" 
+                  name="Turnover Rate" 
+                  stroke="#666"
+                  label={{ value: 'Turnover Rate (x)', position: 'insideBottom', offset: -10 }}
+                />
+                <YAxis 
+                  type="number" 
+                  dataKey="stockDays" 
+                  name="Days in Stock" 
+                  stroke="#666"
+                  label={{ value: 'Days in Stock', angle: -90, position: 'insideLeft' }}
+                />
+                <ZAxis type="number" dataKey="value" range={[50, 400]} />
                 <Tooltip 
+                  cursor={{ strokeDasharray: '3 3' }}
                   contentStyle={{ 
                     backgroundColor: '#fff', 
                     border: '1px solid #3997cd',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
-                  formatter={(value, name) => [
+                  formatter={(value, name, props) => [
                     name === 'turnover' ? `${value}x` : 
-                    name === 'optimal' ? `${value}x` : `$${value.toLocaleString()}`,
-                    name === 'turnover' ? 'Current Turnover' : 
-                    name === 'optimal' ? 'Optimal Target' : 'Inventory Value'
+                    name === 'stockDays' ? `${value} days` :
+                    name === 'value' ? `$${value.toLocaleString()}` : value,
+                    name === 'turnover' ? 'Turnover Rate' : 
+                    name === 'stockDays' ? 'Days in Stock' :
+                    name === 'value' ? 'Inventory Value' : name
                   ]}
+                  labelFormatter={(label) => `Category: ${inventoryTurnoverData[label]?.category || 'Unknown'}`}
                 />
-                <Bar dataKey="turnover" fill="#3997cd" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="optimal" fill="#2d7aad" radius={[0, 2, 2, 0]} />
-              </BarChart>
+                <Scatter name="Categories" dataKey="stockDays" fill="#3997cd">
+                  {inventoryTurnoverData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Scatter>
+                <ReferenceLine x={4} stroke="#ff6b6b" strokeDasharray="5 5" label={{ value: "Target Turnover", position: "topRight" }} />
+                <ReferenceLine y={90} stroke="#ff6b6b" strokeDasharray="5 5" label={{ value: "Target Days", position: "topLeft" }} />
+              </ScatterChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Performance Scores Radial Chart */}
-      <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Gauge className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
-            Performance Score Dashboard
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="10%" outerRadius="80%" data={performanceScoreData}>
-              <RadialBar
-                dataKey="score"
-                cornerRadius={10}
-                fill="#3997cd"
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
-                  border: '1px solid #3997cd',
-                  borderRadius: '8px'
-                }}
-                formatter={(value, name) => [`${value}%`, 'Current Score']}
-              />
-              <Legend 
-                iconSize={12}
-                layout="horizontal"
-                verticalAlign="bottom"
-                align="center"
-                wrapperStyle={{ paddingTop: '20px' }}
-              />
-            </RadialBarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Enhanced Performance Dashboard */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Performance Scores Radial Chart */}
+        <Card className="lg:col-span-2 bg-white border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Gauge className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
+              Performance Score Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%" data={performanceScoreData}>
+                <RadialBar
+                  dataKey="score"
+                  cornerRadius={8}
+                  stroke="#fff"
+                  strokeWidth={2}
+                >
+                  {performanceScoreData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </RadialBar>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #3997cd',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name, props) => [
+                    `${value}% (Target: ${props.payload.target}%)`,
+                    'Performance Score'
+                  ]}
+                  labelFormatter={(label) => `${performanceScoreData[label]?.name || 'Metric'}`}
+                />
+                <Legend 
+                  iconSize={12}
+                  layout="vertical"
+                  verticalAlign="middle"
+                  align="right"
+                  wrapperStyle={{ paddingLeft: '20px' }}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Performance Metrics Summary */}
+        <Card className="bg-white border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Target className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
+              Score Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {performanceScoreData.map((metric, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: metric.fill }}
+                  ></div>
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">{metric.name}</p>
+                    <p className="text-xs text-gray-500">Target: {metric.target}%</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold" style={{ color: metric.fill }}>{metric.score}%</p>
+                  <p className={`text-xs ${
+                    metric.score >= metric.target ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {metric.score >= metric.target ? '✓ On Target' : '⚠ Below Target'}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-700">Overall Score</span>
+                <span className="text-xl font-bold text-blue-600">
+                  {Math.round(performanceScoreData.reduce((acc, curr) => acc + curr.score, 0) / performanceScoreData.length)}%
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
+}
+
+// Add any types needed for TypeScript
+interface TreemapContentProps {
+  root?: any;
+  depth?: number;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  index?: number;
+  payload?: any;
+  colors?: string[];
+  rank?: number;
+  name?: string;
 }

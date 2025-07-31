@@ -1,6 +1,8 @@
 // Initialize AutoFlow Parts with comprehensive automotive data
 import { dataService } from './database';
 import { initializeComprehensiveData } from './comprehensiveSampleData';
+import { initializeCustomerOrdersData } from './sampleCustomerOrders';
+import { initializePausedOrdersForTesting } from './initializePausedOrders';
 
 export const initializeData = async () => {
   try {
@@ -16,6 +18,8 @@ export const initializeData = async () => {
     localStorage.removeItem('purchase_orders');
     localStorage.removeItem('sales_orders');
     localStorage.removeItem('production_orders');
+    localStorage.removeItem('customer_orders');
+    localStorage.removeItem('customer_order_items');
 
     // Initialize database structure
     await dataService.initialize();
@@ -27,8 +31,13 @@ export const initializeData = async () => {
     // Generate realistic inventory levels for all SKUs
     await generateInitialInventoryLevels();
 
+    // Initialize customer orders with realistic revenue data
+    const customerOrdersResult = await initializeCustomerOrdersData();
+    console.log('🛒 Customer orders initialized:', customerOrdersResult);
+
     console.log('🎉 Complete automotive parts database initialized!');
     console.log('📦 System now contains 100+ automotive parts');
+    console.log('💰 Customer orders with revenue data included');
     console.log('🔄 Real-time synchronization enabled across all modules');
     return true;
   } catch (error) {
@@ -86,6 +95,10 @@ const generateInitialInventoryLevels = async () => {
     }
     
     console.log(`✅ Generated inventory records for ${skus.length} SKUs across ${warehouses.length} warehouses`);
+    
+    // Initialize paused orders for testing vendor notification workflow
+    await initializePausedOrdersForTesting();
+    
   } catch (error) {
     console.error('❌ Failed to generate inventory levels:', error);
   }

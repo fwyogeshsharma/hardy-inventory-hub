@@ -245,7 +245,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
           <div className="px-6 space-y-6 overflow-y-auto max-h-[60vh]">
             {/* Basic Product Information */}
-            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-white border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
                   <Sparkles className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -412,7 +412,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             </Card>
 
             {/* SKU Configuration */}
-            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-white border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
                   <Target className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -482,7 +482,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             </Card>
 
             {/* Product Details */}
-            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-white border-0 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
                   <Package className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -571,7 +571,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
 
             {/* Component SKUs (for Kit SKU) */}
             {formData.skuType === 'kit' && (
-              <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+              <Card className="bg-white border-0 shadow-lg">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center text-lg">
                     <Users className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -673,7 +673,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
             )}
           </div>
 
-          <DrawerFooter className="pt-6 pb-6 px-6 bg-white/50 backdrop-blur-sm border-t border-gray-200">
+          <DrawerFooter className="pt-6 pb-6 px-6 bg-white border-t border-gray-200">
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto w-full">
               <Button 
                 onClick={handleSubmit}
@@ -696,7 +696,7 @@ export function AddSKUDrawer({ onSKUAdded }: AddSKUDrawerProps) {
               <DrawerClose asChild>
                 <Button 
                   variant="outline" 
-                  className="flex-1 bg-white/80 border-gray-300 hover:bg-gray-50"
+                  className="flex-1 bg-white border-gray-300 hover:bg-gray-50"
                   size="lg"
                 >
                   Cancel

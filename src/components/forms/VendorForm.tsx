@@ -164,7 +164,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Company Information */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <Building2 className="h-5 w-5 mr-2 text-blue-500" />
@@ -239,7 +239,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
           </Card>
 
           {/* Contact Information */}
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <User className="h-5 w-5 mr-2" style={{color: '#3997cd'}} />
@@ -285,7 +285,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </div>
 
         {/* Address */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <MapPin className="h-5 w-5 mr-2 text-red-500" />
@@ -346,7 +346,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </Card>
 
         {/* Business Terms */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <CreditCard className="h-5 w-5 mr-2 text-orange-500" />
@@ -412,7 +412,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </Card>
 
         {/* Certifications */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center">
@@ -471,7 +471,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </Card>
 
         {/* Specializations */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center">
@@ -530,7 +530,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </Card>
 
         {/* Notes */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="text-lg">Additional Notes</CardTitle>
           </CardHeader>
@@ -546,7 +546,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
         </Card>
 
         {/* Action Buttons */}
-        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+        <Card className="bg-white border-0 shadow-lg">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -558,7 +558,7 @@ export const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel }) =>
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  className="bg-white/80 hover:bg-white"
+                  className="bg-white hover:bg-white"
                   disabled={isSubmitting}
                 >
                   Cancel
