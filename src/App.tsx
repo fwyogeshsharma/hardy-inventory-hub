@@ -148,7 +148,7 @@ const EnhancedHeader = () => {
             </div>
             <Avatar className="h-8 w-8 ring-2" style={{backgroundColor: '#e6f2fa'}}>
               <AvatarFallback className="text-white text-sm font-semibold" style={{backgroundColor: '#3997cd'}}>
-                YS
+                JS
               </AvatarFallback>
             </Avatar>
           </div>
