@@ -199,6 +199,11 @@ export default function Orders() {
     const matchesWorkflowFilter = filterWorkflowStatus === 'all' || order.workflow_status === filterWorkflowStatus;
     
     return matchesSearch && matchesStatusFilter && matchesWorkflowFilter;
+  }).sort((a, b) => {
+    // Sort by creation date (newest first)
+    const dateA = new Date(a.created_at || '1970-01-01').getTime();
+    const dateB = new Date(b.created_at || '1970-01-01').getTime();
+    return dateB - dateA;
   });
 
   // Calculate summary statistics

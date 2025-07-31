@@ -783,9 +783,54 @@ export class WorkflowManager {
           );
         }
       }
+
+      // Automatically create a sales order for the completed production
+      await this.createSalesOrderFromProduction(order, quantityCompleted);
+      
     } catch (error) {
       console.error('Error completing kit production:', error);
       throw error;
+    }
+  }
+
+  // Create sales order from completed production
+  async createSalesOrderFromProduction(productionOrder: any, quantityCompleted: number): Promise<void> {
+    try {
+      // Get the kit SKU details
+      const kitSKU = await dataService.getSKUById(productionOrder.kit_sku_id);
+      if (!kitSKU) {
+        throw new Error(`Kit SKU ${productionOrder.kit_sku_id} not found`);
+      }
+
+      // Calculate pricing (using unit price or a default price)
+      const unitPrice = kitSKU.unit_price || kitSKU.unit_cost * 1.5 || 100; // 50% markup over cost or default $100
+
+      // Create sales order data
+      const salesOrderData = {
+        customer_name: "Production Ready Stock",
+        customer_type: 'distributor' as const,
+        contact_person: "Inventory Manager", 
+        email: "inventory@company.com",
+        priority: 'medium' as const,
+        required_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+        shipping_method: 'standard' as const,
+        payment_terms: 'net_30' as const,
+        order_items: [{
+          sku_id: productionOrder.kit_sku_id,
+          quantity: quantityCompleted,
+          unit_price: unitPrice
+        }],
+        notes: `Auto-generated from completed production order #${productionOrder.order_number || productionOrder.id}. Production completed on ${new Date().toLocaleDateString()}.`
+      };
+
+      // Create the sales order using inventoryManager
+      await inventoryManager.createSalesOrder(salesOrderData);
+      
+      console.log(`✅ Sales order created for ${quantityCompleted} units of ${kitSKU.sku_name} from production completion`);
+    } catch (error) {
+      console.error('Error creating sales order from production:', error);
+      // Don't throw the error to avoid breaking the production completion flow
+      // Log it instead for manual review
     }
   }
 

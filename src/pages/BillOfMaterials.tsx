@@ -276,7 +276,7 @@ export default function BillOfMaterials() {
       
       toast({
         title: "Production Completed",
-        description: `${quantityCompleted} units completed and added to inventory`,
+        description: `${quantityCompleted} units completed and added to inventory. Sales order automatically created.`,
         variant: "default",
       });
       
@@ -447,7 +447,7 @@ export default function BillOfMaterials() {
           </CardContent>
         </Card>
 
-        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100())'}}>
+        <Card className="text-white border-0 shadow-lg" style={{background: 'linear-gradient(135deg, #3997cd 0%, #2d7aad 100%)'}}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>

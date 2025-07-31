@@ -183,6 +183,11 @@ export default function PurchaseOrders() {
     const matchesFilter = filterStatus === 'all' || item.warehouse_status === filterStatus;
     
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+    // Sort by creation date (newest first)
+    const dateA = new Date(a.created_at || '1970-01-01').getTime();
+    const dateB = new Date(b.created_at || '1970-01-01').getTime();
+    return dateB - dateA;
   });
 
   // Calculate summary statistics

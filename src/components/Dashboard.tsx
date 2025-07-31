@@ -42,7 +42,6 @@ import { ProductionOrderForm } from "./forms/ProductionOrderForm";
 import { CustomerOrderForm } from "./forms/CustomerOrderForm";
 import { VendorForm } from "./forms/VendorForm";
 import { AddSKUDrawer } from "./AddSKUDrawer";
-import { InitializeDataButton } from "./InitializeDataButton";
 
 export const Dashboard = () => {
   const [skus, setSKUs] = useState<SKU[]>([]);
@@ -80,6 +79,13 @@ export const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Check if sample data exists, if not initialize it
+      const existingSKUs = localStorage.getItem('skus_db');
+      if (!existingSKUs || JSON.parse(existingSKUs).length === 0) {
+        console.log('No sample data found, initializing default data...');
+        await initializeData();
+      }
       
       // Load all data in parallel
       const [
@@ -430,7 +436,6 @@ export const Dashboard = () => {
             <Download className="h-4 w-4 mr-2" style={{color: '#3997cd'}} />
             Export
           </Button>
-          <InitializeDataButton />
           <Button 
             variant="outline" 
             size="sm" 

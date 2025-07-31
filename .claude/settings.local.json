@@ -14,7 +14,8 @@
       "Bash(sed:*)",
       "Bash(npm install:*)",
       "Bash(npm run lint)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }

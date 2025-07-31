@@ -2,11 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2, Trash2, ShoppingCart, RotateCcw } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Calendar, Download, RefreshCw, Target, Loader2, Trash2, ShoppingCart, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { dataService, SKU, Inventory as InventoryRecord } from "@/lib/database";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { AddSKUDrawer } from "@/components/AddSKUDrawer";
 import { FormModal } from "@/components/forms/FormModal";
-import { initializeAutomotivePartsData } from "@/lib/automotivePartsData";
+import { initializeData } from "@/lib/initializeData";
 import { workflowManager } from "@/lib/workflowExtensions";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +26,9 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [reorderingItems, setReorderingItems] = useState<Set<number>>(new Set());
+  const [deletingItems, setDeletingItems] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     loadData();
@@ -31,7 +43,7 @@ export default function Inventory() {
       const existingSKUs = await dataService.getSKUs();
       if (existingSKUs.length === 0) {
         console.log('No SKUs found, initializing comprehensive automotive data...');
-        await initializeAutomotivePartsData();
+        await initializeData();
       }
       
       const [skusData, inventoryData] = await Promise.all([
@@ -46,6 +58,8 @@ export default function Inventory() {
       });
       setSKUs(sortedSKUs);
       setInventory(inventoryData);
+      // Reset to first page when data is loaded
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error loading inventory data:', error);
     } finally {
@@ -65,24 +79,6 @@ export default function Inventory() {
     loadData();
   };
 
-  const handleClearAllData = async () => {
-    if (window.confirm('Are you sure you want to clear all inventory data? This action cannot be undone.')) {
-      try {
-        setLoading(true);
-        await dataService.clearAllData();
-        setSKUs([]);
-        setInventory([]);
-        // Reinitialize with fresh data
-        await dataService.initialize();
-        await loadData();
-      } catch (error) {
-        console.error('Error clearing data:', error);
-        alert('Failed to clear inventory data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   // Helper functions
   const getStockData = (sku: SKU) => {
@@ -202,6 +198,91 @@ export default function Inventory() {
     }
   };
 
+  // Handle delete SKU
+  const handleDeleteSKU = async (sku: SKU) => {
+    if (window.confirm(`Are you sure you want to delete "${sku.sku_name}" (${sku.sku_code})? This action cannot be undone and will remove all associated inventory data.`)) {
+      try {
+        setDeletingItems(prev => new Set(prev).add(sku.id));
+        
+        await dataService.deleteSKU(sku.id);
+        
+        // Remove from local state
+        setSKUs(prev => prev.filter(s => s.id !== sku.id));
+        setInventory(prev => prev.filter(inv => inv.sku_id !== sku.id));
+        
+        // Adjust pagination if current page becomes empty
+        const remainingSKUs = skus.filter(s => s.id !== sku.id);
+        const newTotalPages = Math.ceil(remainingSKUs.length / itemsPerPage);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        }
+        
+        toast({
+          title: "SKU Deleted",
+          description: `${sku.sku_name} has been successfully deleted from inventory.`,
+          variant: "default",
+        });
+        
+      } catch (error) {
+        console.error('Error deleting SKU:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete SKU. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setDeletingItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(sku.id);
+          return newSet;
+        });
+      }
+    }
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = skus.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(skus.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6 min-h-screen" style={{background: 'linear-gradient(135deg, #f8fafc 0%, #e6f2fa 100%)'}}>
       {/* Header Section */}
@@ -232,16 +313,6 @@ export default function Inventory() {
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-red-50 border-red-200 text-red-600 hover:bg-red-100 backdrop-blur-sm"
-            onClick={handleClearAllData}
-            disabled={loading}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear All
           </Button>
           <Button 
             onClick={() => setModalOpen(true)}
@@ -383,7 +454,7 @@ export default function Inventory() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {skus.map((sku) => {
+              {currentItems.map((sku) => {
                 const stockData = getStockData(sku);
                 return (
                   <div key={sku.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -476,11 +547,83 @@ export default function Inventory() {
                           </Button>
                         </div>
                       )}
+                      
+                      {/* Delete Button - Always visible */}
+                      <div className="mt-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                          onClick={() => handleDeleteSKU(sku)}
+                          disabled={deletingItems.has(sku.id)}
+                        >
+                          {deletingItems.has(sku.id) ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 border-t border-gray-200/50 pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <span>
+                      Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, skus.length)} of {skus.length} items
+                    </span>
+                  </div>
+                  
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={handlePreviousPage}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-gray-100'}
+                        />
+                      </PaginationItem>
+                      
+                      {getPageNumbers().map((pageNumber) => (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(pageNumber)}
+                            isActive={currentPage === pageNumber}
+                            className="cursor-pointer hover:bg-gray-100"
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      {totalPages > 5 && currentPage < totalPages - 2 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={handleNextPage}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-gray-100'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

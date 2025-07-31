@@ -2900,6 +2900,42 @@ export class InventoryManager {
       throw error;
     }
   }
+
+  // Delete SKU and related data
+  async deleteSKU(skuId: number): Promise<void> {
+    try {
+      // Remove SKU from SKUs list
+      const skus = await this.getSKUs();
+      const filteredSKUs = skus.filter(sku => sku.id !== skuId);
+      localStorage.setItem('skus', JSON.stringify(filteredSKUs));
+
+      // Remove associated inventory records
+      const inventory = await this.getInventory();
+      const filteredInventory = inventory.filter(inv => inv.sku_id !== skuId);
+      localStorage.setItem('inventory', JSON.stringify(filteredInventory));
+
+      // Remove SKU components if it's a kit SKU
+      const components = localStorage.getItem('sku_components');
+      if (components) {
+        const parsedComponents = JSON.parse(components);
+        const filteredComponents = parsedComponents.filter((comp: any) => comp.kit_sku_id !== skuId && comp.component_sku_id !== skuId);
+        localStorage.setItem('sku_components', JSON.stringify(filteredComponents));
+      }
+
+      // Remove related customer order items
+      const orderItems = localStorage.getItem('customer_order_items');
+      if (orderItems) {
+        const parsedOrderItems = JSON.parse(orderItems);
+        const filteredOrderItems = parsedOrderItems.filter((item: any) => item.sku_id !== skuId);
+        localStorage.setItem('customer_order_items', JSON.stringify(filteredOrderItems));
+      }
+
+      console.log(`SKU ${skuId} and related data deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting SKU:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

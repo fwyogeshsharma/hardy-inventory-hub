@@ -157,6 +157,11 @@ export default function SalesOrders() {
     const matchesPriority = priorityFilter === "all" || order.priority === priorityFilter;
     
     return matchesSearch && matchesStatus && matchesPriority;
+  }).sort((a, b) => {
+    // Sort by creation date (newest first)
+    const dateA = new Date(a.created_at || '1970-01-01').getTime();
+    const dateB = new Date(b.created_at || '1970-01-01').getTime();
+    return dateB - dateA;
   });
 
   const getStatusBadgeColor = (status: string) => {
