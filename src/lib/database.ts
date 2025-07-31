@@ -2332,50 +2332,59 @@ export class InventoryManager {
     required_date: string;
     shipping_method: 'standard' | 'express' | 'overnight' | 'freight';
     payment_terms: 'cod' | 'net_30' | 'net_60' | 'prepaid';
-    order_items: Array<{
+    order_items?: Array<{
       sku_id: number;
       quantity: number;
       unit_price: number;
     }>;
+    // New fields for BOM-based orders
+    bom_template_id?: number;
+    production_required?: boolean;
+    order_date?: string;  
+    status?: string;
+    total_amount?: number;
     notes?: string;
   }): Promise<any> {
     try {
-      // First, check stock availability for all items
+      // Check stock availability for items (only if order_items are provided)
       const inventory = await this.dataService.getInventory();
       const stockCheckResults = [];
+      let insufficientItems: any[] = [];
       
-      for (const item of orderData.order_items) {
-        const skuInventory = inventory.find(inv => inv.sku_id === item.sku_id);
-        if (!skuInventory || skuInventory.quantity_available < item.quantity) {
-          stockCheckResults.push({
-            sku_id: item.sku_id,
-            requested: item.quantity,
-            available: skuInventory?.quantity_available || 0,
-            insufficient: true
-          });
-        } else {
-          stockCheckResults.push({
-            sku_id: item.sku_id,
-            requested: item.quantity,
-            available: skuInventory.quantity_available,
-            insufficient: false
-          });
+      if (orderData.order_items && orderData.order_items.length > 0) {
+        for (const item of orderData.order_items) {
+          const skuInventory = inventory.find(inv => inv.sku_id === item.sku_id);
+          if (!skuInventory || skuInventory.quantity_available < item.quantity) {
+            stockCheckResults.push({
+              sku_id: item.sku_id,
+              requested: item.quantity,
+              available: skuInventory?.quantity_available || 0,
+              insufficient: true
+            });
+          } else {
+            stockCheckResults.push({
+              sku_id: item.sku_id,
+              requested: item.quantity,
+              available: skuInventory.quantity_available,
+              insufficient: false
+            });
+          }
         }
-      }
-      
-      // If any items have insufficient stock, create backorder suggestions
-      const insufficientItems = stockCheckResults.filter(item => item.insufficient);
-      if (insufficientItems.length > 0) {
-        // Create alerts for insufficient stock
-        for (const item of insufficientItems) {
-          await this.createAlert({
-            alert_type: 'insufficient_stock_for_order',
-            title: 'Insufficient Stock for Sales Order',
-            message: `Insufficient stock for SKU ${item.sku_id}. Requested: ${item.requested}, Available: ${item.available}`,
-            severity: 'high',
-            entity_type: 'inventory',
-            entity_id: item.sku_id
-          });
+        
+        // If any items have insufficient stock, create backorder suggestions
+        insufficientItems = stockCheckResults.filter(item => item.insufficient);
+        if (insufficientItems.length > 0) {
+          // Create alerts for insufficient stock
+          for (const item of insufficientItems) {
+            await this.createAlert({
+              alert_type: 'insufficient_stock_for_order',
+              title: 'Insufficient Stock for Sales Order',
+              message: `Insufficient stock for SKU ${item.sku_id}. Requested: ${item.requested}, Available: ${item.available}`,
+              severity: 'high',
+              entity_type: 'inventory',
+              entity_id: item.sku_id
+            });
+          }
         }
       }
       
@@ -2387,9 +2396,10 @@ export class InventoryManager {
       const orderNumber = `SO-${new Date().getFullYear()}-${newId.toString().padStart(4, '0')}`;
       
       // Calculate total amount
-      const totalAmount = orderData.order_items.reduce((sum, item) => 
-        sum + (item.quantity * item.unit_price), 0
-      );
+      const totalAmount = orderData.total_amount || 
+        (orderData.order_items ? orderData.order_items.reduce((sum, item) => 
+          sum + (item.quantity * item.unit_price), 0
+        ) : 0);
       
       const newOrder = {
         id: newId,
@@ -2399,9 +2409,9 @@ export class InventoryManager {
         contact_person: orderData.contact_person,
         email: orderData.email,
         phone: orderData.phone,
-        status: insufficientItems.length > 0 ? 'backorder' : 'confirmed',
+        status: orderData.status || (insufficientItems.length > 0 ? 'backorder' : 'confirmed'),
         priority: orderData.priority,
-        order_date: new Date().toISOString().split('T')[0],
+        order_date: orderData.order_date || new Date().toISOString().split('T')[0],
         required_date: orderData.required_date,
         shipping_method: orderData.shipping_method,
         payment_terms: orderData.payment_terms,
@@ -2409,6 +2419,9 @@ export class InventoryManager {
         total_amount: totalAmount,
         notes: orderData.notes,
         stock_check_results: stockCheckResults,
+        // New fields for BOM workflow
+        bom_template_id: orderData.bom_template_id,
+        production_required: orderData.production_required || false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -2416,27 +2429,30 @@ export class InventoryManager {
       existingOrders.push(newOrder);
       localStorage.setItem('sales_orders', JSON.stringify(existingOrders));
       
-      // Create order items
-      const items = localStorage.getItem('sales_order_items');
-      const existingItems = items ? JSON.parse(items) : [];
-      
-      const newItems = orderData.order_items.map((item, index) => ({
-        id: Math.max(0, ...existingItems.map((i: any) => i.id)) + index + 1,
-        order_id: newId,
-        sku_id: item.sku_id,
-        quantity_ordered: item.quantity,
-        quantity_allocated: Math.min(item.quantity, stockCheckResults.find(s => s.sku_id === item.sku_id)?.available || 0),
-        quantity_shipped: 0,
-        unit_price: item.unit_price,
-        line_total: item.quantity * item.unit_price,
-        created_at: new Date().toISOString()
-      }));
-      
-      existingItems.push(...newItems);
-      localStorage.setItem('sales_order_items', JSON.stringify(existingItems));
-      
-      // Reserve available inventory for the order
-      await this.reserveInventoryForOrder(newId, newItems);
+      // Create order items (only if order_items are provided)
+      let newItems: any[] = [];
+      if (orderData.order_items && orderData.order_items.length > 0) {
+        const items = localStorage.getItem('sales_order_items');
+        const existingItems = items ? JSON.parse(items) : [];
+        
+        newItems = orderData.order_items.map((item, index) => ({
+          id: Math.max(0, ...existingItems.map((i: any) => i.id)) + index + 1,
+          order_id: newId,
+          sku_id: item.sku_id,
+          quantity_ordered: item.quantity,
+          quantity_allocated: Math.min(item.quantity, stockCheckResults.find(s => s.sku_id === item.sku_id)?.available || 0),
+          quantity_shipped: 0,
+          unit_price: item.unit_price,
+          line_total: item.quantity * item.unit_price,
+          created_at: new Date().toISOString()
+        }));
+        
+        existingItems.push(...newItems);
+        localStorage.setItem('sales_order_items', JSON.stringify(existingItems));
+        
+        // Reserve available inventory for the order
+        await this.reserveInventoryForOrder(newId, newItems);
+      }
       
       // Emit sales order created event
       this.emit('sales_order_created', {

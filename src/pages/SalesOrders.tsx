@@ -27,6 +27,7 @@ import {
 import { inventoryManager, dataService, SKU } from "@/lib/database";
 import { useToast } from "@/hooks/use-toast";
 import { FormModal } from "@/components/forms/FormModal";
+import SalesOrderCreationForm from "@/components/SalesOrderCreationForm";
 
 interface SalesOrder {
   id: number;
@@ -597,15 +598,13 @@ export default function SalesOrders() {
       <FormModal
         isOpen={createOrderModalOpen}
         onClose={() => setCreateOrderModalOpen(false)}
-        title="Create New Sales Order"
-        maxWidth="max-w-4xl"
+        title="Create New Sales Order with BOM Selection"
+        maxWidth="max-w-6xl"
       >
-        <div className="text-center py-8">
-          <p className="text-gray-600">Sales order creation form would be implemented here.</p>
-          <p className="text-sm text-gray-500 mt-2">
-            This would include customer selection, item selection with stock checking, and order details.
-          </p>
-        </div>
+        <SalesOrderCreationForm 
+          onClose={() => setCreateOrderModalOpen(false)}
+          onOrderCreated={loadSalesOrders}
+        />
       </FormModal>
     </div>
   );

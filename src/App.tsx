@@ -27,6 +27,7 @@ import {
 import Index from "./pages/Index";
 import Inventory from "./pages/Inventory";
 import Production from "./pages/Production";
+import ProductionPlanning from "./pages/ProductionPlanning";
 import Orders from "./pages/Orders";
 import Warehouse from "./pages/Warehouse";
 import Vendors from "./pages/Vendors";
@@ -55,6 +56,7 @@ const EnhancedHeader = () => {
       '/purchase-orders': 'Purchase Orders',
       '/sales-orders': 'Sales Orders',
       '/bom': 'Bill of Materials',
+      '/production-planning': 'Production Planning',
       '/production': 'Parts Production', 
       '/orders': 'Order Management',
       '/warehouse': 'Warehouse Management',
@@ -74,6 +76,7 @@ const EnhancedHeader = () => {
       '/purchase-orders': 'Manage purchase orders and inventory replenishment',
       '/sales-orders': 'Manage customer orders and inventory allocation', 
       '/bom': 'Manage Bill of Materials templates and kit production orders',
+      '/production-planning': 'Plan and manage sales-driven production workflow',
       '/production': 'Monitor and manage parts production and manufacturing',
       '/orders': 'Track and manage customer orders and fulfillment',
       '/warehouse': 'Manage storage locations and distribution logistics',
@@ -188,6 +191,7 @@ const App = () => (
                   <Route path="/purchase-orders" element={<PurchaseOrders />} />
                   <Route path="/sales-orders" element={<SalesOrders />} />
                   <Route path="/bom" element={<BillOfMaterials />} />
+                  <Route path="/production-planning" element={<ProductionPlanning />} />
                   <Route path="/production" element={<Production />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/warehouse" element={<Warehouse />} />

@@ -1,51 +1,52 @@
-# Inventory Management Workflow Requirements
+# Sales-Driven Production Workflow Requirements
 
 ## Overview
-This document outlines the complete workflow requirements for the Hardy Inventory Hub application, detailing the process flow from SKU management to kit production with Bill of Materials (BOM) functionality.
+This document outlines the complete workflow requirements for the Hardy Inventory Hub application, detailing the sales-driven process flow from sales order creation through BOM template selection, production planning, inventory verification, and purchase order generation.
 
-## Workflow Process
+## New Workflow Process
 
-### 1. SKU Management & Out of Stock Detection
-- Add SKUs to the inventory system
-- Monitor stock levels automatically
-- Detect when SKUs reach "out of stock" status
-- **REQUIREMENT**: Add "Reorder" button on inventory item list for items with status 'out of stock'
+### 1. Sales Order Creation
+- Create new sales orders as the starting point of the workflow
+- Sales team initiates orders based on customer demand and forecasting
+- Each sales order requires selection of products to be manufactured
+- **REQUIREMENT**: Sales order interface with product selection capabilities
 
-### 2. Reorder Process
-- When an SKU is out of stock, display a "Reorder" button on the inventory item list
-- Clicking the "Reorder" button should:
-  - Mark the item for reordering
-  - Make the item visible on the Purchase Order page
-  - Make the item visible on the Workflow page
+### 2. BOM Template Selection
+- When creating a sales order, system prompts: "Which BOM template do you want to create for production?"
+- Display available BOM templates based on forecasting and product requirements
+- User selects appropriate BOM template for the sales order
+- **REQUIREMENT**: BOM template library with forecasting-based recommendations
+- Link selected BOM template to the sales order for production planning
 
-### 3. Purchase Order Management
-- Navigate to Purchase Order screen
-- Display items that have been marked for reorder
-- **REQUIREMENT**: Add button to "Check item in warehouse"
-- If item is not available in warehouse:
-  - Mark as "New Order Required"
-  - Move item to Order page
+### 3. Production Planning & BOM Processing
+- Once BOM template is selected, initiate production planning process
+- Selected BOM enters production queue
+- System analyzes BOM requirements and component specifications
+- **REQUIREMENT**: Production planning interface with BOM-based workflow
+- Track production status and timeline for each BOM
 
-### 4. Order Processing
-- Items marked as "New Order Required" appear on Order page
-- Verify that orders are coming from regular suppliers
-- **REQUIREMENT**: Put SKU process on pause and wait for supplies
-- Monitor supplier delivery status
-- Once supplies are received from regulars, SKU becomes available for use
+### 4. Inventory Verification & Stock Checking
+- Before production begins, system checks inventory for all BOM components
+- Verify availability of each item required in the selected BOM
+- Generate inventory status report showing:
+  - Available items with sufficient quantity
+  - Items with insufficient stock
+  - Completely out-of-stock items
+- **REQUIREMENT**: Automated inventory checking against BOM requirements
 
-### 5. Bill of Materials (BOM) Functionality
-- **REQUIREMENT**: Implement BOM functionality in the app
-- Track what has been purchased
-- Monitor quantity of each component
-- Track per-piece price for each component
-- Maintain purchase history and pricing data
+### 5. Purchase Order Generation
+- For items not available in inventory or insufficient quantities:
+  - Automatically generate purchase order requirements
+  - Calculate required quantities based on BOM specifications
+  - Create purchase orders for missing/insufficient components
+- **REQUIREMENT**: Automated purchase order generation based on inventory gaps
+- Track purchase order status and supplier delivery timelines
 
-### 6. Kit SKU Production
-- Once individual SKUs are available, create Kit SKUs
-- Use BOM data to determine required components
-- **REQUIREMENT**: Production of Kit SKU with Kit BOM
-- Track which components are used in each kit
-- Monitor kit production costs and quantities
+### 6. Production Workflow Management
+- Hold production until all required components are available
+- Monitor purchase order fulfillment and inventory updates
+- Release production once all BOM components are in stock
+- **REQUIREMENT**: Production hold/release system based on component availability
 
 ### 7. Workflow Dashboard Visualization
 - **REQUIREMENT**: Visual representation on workflow-dashboard of inventory
@@ -55,110 +56,135 @@ This document outlines the complete workflow requirements for the Hardy Inventor
 
 ## Key Features Required
 
-### Inventory Page Enhancements
-- [x] Display SKU list with current stock status
-- [ ] Add "Reorder" button for out-of-stock items
-- [ ] Filter and sort by stock status
-- [ ] Visual indicators for stock levels
+### Sales Order Management
+- [ ] Sales order creation interface
+- [ ] Customer information and forecasting integration
+- [ ] Product selection for manufacturing
+- [ ] Sales order tracking and status updates
+- [ ] Integration with BOM template selection
 
-### Purchase Order Page Features
-- [ ] Display reorder requests
-- [ ] "Check in warehouse" functionality
-- [ ] Mark items as "New Order Required"
-- [ ] Integration with warehouse management
+### BOM Template System
+- [ ] BOM template library and management
+- [ ] Template selection interface during sales order creation
+- [ ] Forecasting-based BOM recommendations
+- [ ] Template versioning and revision control
+- [ ] Component specification and quantity tracking
 
-### Order Management Page
-- [ ] List items requiring new orders
-- [ ] Supplier verification system
-- [ ] Order tracking and status updates
-- [ ] Pause/resume SKU processing
+### Production Planning Interface
+- [ ] Production queue management
+- [ ] BOM-based production workflow
+- [ ] Production timeline and scheduling
+- [ ] Production status tracking and updates
+- [ ] Resource allocation and planning
 
-### Bill of Materials (BOM) System
-- [ ] Create BOM for kit SKUs
-- [ ] Track component costs and quantities
-- [ ] Purchase history tracking
-- [ ] Per-piece pricing system
-- [ ] Component availability checking
+### Inventory Verification System
+- [ ] Automated inventory checking against BOM requirements
+- [ ] Real-time stock level verification
+- [ ] Inventory status reporting (available/insufficient/out-of-stock)
+- [ ] Component availability dashboard
+- [ ] Stock level alerts and notifications
 
-### Kit Production System
-- [ ] Kit SKU creation interface
-- [ ] BOM-based production planning
-- [ ] Component allocation system
-- [ ] Production cost calculation
-- [ ] Quality control tracking
+### Automated Purchase Order Generation
+- [ ] Auto-generate POs for missing/insufficient components
+- [ ] Quantity calculation based on BOM specifications
+- [ ] Supplier selection and management
+- [ ] Purchase order tracking and fulfillment monitoring
+- [ ] Integration with inventory updates
 
-### Workflow Dashboard
-- [x] Real-time inventory status
-- [x] Purchase order tracking
-- [x] Sales order monitoring
-- [x] Production metrics
-- [ ] Enhanced workflow visualization
-- [ ] Stage-by-stage progress tracking
-- [ ] Alert system for bottlenecks
+### Production Hold/Release System
+- [ ] Production hold based on component availability
+- [ ] Automated production release when components are stocked
+- [ ] Production status dashboard
+- [ ] Timeline management and delay tracking
+- [ ] Notification system for production readiness
+
+### Enhanced Workflow Dashboard
+- [ ] Sales-to-production workflow visualization
+- [ ] Real-time status across all workflow stages
+- [ ] BOM template usage analytics
+- [ ] Production bottleneck identification
+- [ ] Purchase order fulfillment tracking
 
 ## Implementation Priority
 
-### Phase 1: Core Reorder System
-1. Add reorder buttons to inventory items
-2. Implement purchase order request system
-3. Create warehouse checking functionality
-4. Basic order management page
+### Phase 1: Sales Order & BOM Template Foundation
+1. Create sales order management interface
+2. Build BOM template library and selection system
+3. Implement sales order to BOM template linking
+4. Basic sales order tracking functionality
 
-### Phase 2: BOM System
-1. Design BOM data structure
-2. Implement BOM creation interface
-3. Add cost tracking functionality
-4. Purchase history system
+### Phase 2: Production Planning & Inventory Integration
+1. Develop production planning interface
+2. Implement automated inventory checking against BOM requirements
+3. Create inventory status reporting system
+4. Build component availability verification
 
-### Phase 3: Kit Production
-1. Kit SKU creation system
-2. BOM-based production planning
-3. Component allocation logic
-4. Production workflow integration
+### Phase 3: Automated Purchase Order System
+1. Auto-generate purchase orders for missing components
+2. Implement quantity calculation based on BOM specifications
+3. Create supplier management and selection system
+4. Build purchase order tracking and fulfillment monitoring
 
-### Phase 4: Enhanced Workflow Dashboard
-1. Advanced visualization components
-2. Real-time progress tracking
-3. Automated workflow notifications
-4. Performance analytics
+### Phase 4: Production Control & Workflow Management
+1. Implement production hold/release system
+2. Create production status dashboard
+3. Build automated production release triggers
+4. Develop timeline management and delay tracking
+
+### Phase 5: Enhanced Sales-to-Production Dashboard
+1. Sales-to-production workflow visualization
+2. Real-time status tracking across all stages
+3. BOM template usage analytics and reporting
+4. Production bottleneck identification and alerts
 
 ## Technical Requirements
 
 ### Database Schema Updates
-- Extend purchase order tables for reorder functionality
-- Create BOM tables for kit management
-- Add workflow status tracking tables
-- Implement order pause/resume functionality
+- Create sales order tables with customer and forecasting data
+- Build BOM template tables with component specifications
+- Add production planning and status tracking tables
+- Implement inventory verification and component availability tracking
+- Create automated purchase order generation tables
+- Add production hold/release status management
 
 ### API Endpoints
-- Reorder request endpoints
-- Warehouse checking API
-- BOM management endpoints
-- Kit production tracking API
+- Sales order management API
+- BOM template selection and management endpoints
+- Production planning and queue management API
+- Automated inventory verification endpoints
+- Purchase order generation and tracking API
+- Production hold/release control endpoints
 
 ### User Interface Components
-- Reorder button component
-- Warehouse status checker
-- BOM editor interface
-- Kit production dashboard
+- Sales order creation and management interface
+- BOM template selection wizard
+- Production planning dashboard
+- Inventory verification status display
+- Automated purchase order review interface
+- Production hold/release control panel
 
 ### Integration Points
-- Inventory management system integration
-- Purchase order system connection
-- Warehouse management interface
-- Supplier verification system
+- Sales order to production planning workflow
+- BOM template to inventory verification system
+- Inventory checking to purchase order generation
+- Purchase order fulfillment to production release
+- Real-time status updates across all workflow stages
 
 ## Success Metrics
-- Reduction in out-of-stock incidents
-- Improved order fulfillment time
-- Better cost tracking accuracy
-- Enhanced production efficiency
-- Real-time workflow visibility
+- Improved sales order to production lead time
+- Reduced component stockouts during production
+- Increased production planning accuracy
+- Enhanced BOM template utilization efficiency
+- Automated purchase order generation accuracy
+- Real-time workflow visibility and control
 
 ## Dependencies
 - Existing inventory management system
-- Purchase order functionality
-- Warehouse management system
-- Supplier management database
+- Sales order management capabilities
+- BOM template library and management
+- Purchase order generation and tracking system
+- Production planning and control infrastructure
+- Supplier management and fulfillment tracking
 
-This workflow ensures complete traceability from individual SKU procurement through kit production, with proper cost tracking and real-time visibility throughout the entire process.
+## Workflow Summary
+This new sales-driven workflow ensures complete traceability and control from sales order creation through BOM template selection, production planning, inventory verification, automated purchase order generation, and production control. The system provides real-time visibility and automated decision-making throughout the entire sales-to-production process, optimizing resource utilization and reducing production delays.

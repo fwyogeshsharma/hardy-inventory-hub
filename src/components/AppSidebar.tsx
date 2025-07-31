@@ -38,6 +38,7 @@ const navigationItems = [
   { title: "Purchase Orders", url: "/purchase-orders", icon: Truck },
   { title: "Sales Orders", url: "/sales-orders", icon: ShoppingBag },
   { title: "Bill of Materials", url: "/bom", icon: Layers },
+  { title: "Production Planning", url: "/production-planning", icon: Settings },
   { title: "Production", url: "/production", icon: Factory },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Warehouse", url: "/warehouse", icon: Warehouse },
