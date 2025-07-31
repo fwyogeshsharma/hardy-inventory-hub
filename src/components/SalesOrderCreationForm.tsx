@@ -50,7 +50,8 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
     email: '',
     phone: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    required_date: '',
+    expected_delivery_date: '',
+    quantity: 1,
     shipping_method: 'standard' as 'standard' | 'express' | 'overnight' | 'freight',
     payment_terms: 'net_30' as 'cod' | 'net_30' | 'net_60' | 'prepaid',
     notes: '',
@@ -89,20 +90,21 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
       const components = await workflowManager.getBOMComponents();
       const bomComponents = components.filter(comp => comp.bom_template_id === bomTemplate.id);
       
-      // Check inventory for each component
+      // Check inventory for each component (multiply by order quantity)
       const inventoryResults = await Promise.all(
         bomComponents.map(async (component) => {
           const sku = skus.find(s => s.id === component.component_sku_id);
           const inventory = await inventoryManager.getSKUInventory(component.component_sku_id);
           const totalAvailable = inventory.reduce((sum: number, inv: any) => sum + inv.quantity_available, 0);
+          const totalRequired = component.quantity_required * orderForm.quantity; // Multiply by order quantity
           
           return {
             component,
             sku,
-            required_quantity: component.quantity_required,
+            required_quantity: totalRequired,
             available_quantity: totalAvailable,
-            sufficient: totalAvailable >= component.quantity_required,
-            shortage: Math.max(0, component.quantity_required - totalAvailable)
+            sufficient: totalAvailable >= totalRequired,
+            shortage: Math.max(0, totalRequired - totalAvailable)
           };
         })
       );
@@ -136,27 +138,35 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
       }
 
       // Validate form
-      if (!orderForm.customer_name || !orderForm.contact_person || !orderForm.required_date) {
+      if (!orderForm.customer_name || !orderForm.contact_person || !orderForm.expected_delivery_date || !orderForm.quantity) {
         toast({
           title: "Validation Error",
-          description: "Please fill in all required fields",
+          description: "Please fill in all required fields including quantity and expected delivery date",
           variant: "destructive",
         });
         return;
       }
 
-      // Create sales order with BOM template reference
+      // Create sales order with BOM template reference and order item
       const orderData = {
         ...orderForm,
+        required_date: orderForm.expected_delivery_date, // Map to database field
         order_date: new Date().toISOString().split('T')[0],
         status: 'pending',
         payment_status: 'pending',
-        total_amount: selectedBOMTemplate.total_cost,
+        total_amount: selectedBOMTemplate.total_cost * orderForm.quantity,
         bom_template_id: selectedBOMTemplate.id,
-        production_required: true
+        production_required: true,
+        order_items: [
+          {
+            sku_id: selectedBOMTemplate.kit_sku_id,
+            quantity: orderForm.quantity,
+            unit_price: selectedBOMTemplate.total_cost
+          }
+        ]
       };
 
-      await inventoryManager.createSalesOrder(orderData);
+      const createdOrder = await inventoryManager.createSalesOrder(orderData);
 
       // Check if we need to create purchase orders for missing items
       const missingItems = inventoryCheck.filter(item => !item.sufficient);
@@ -295,11 +305,21 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Required Date *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery Date *</label>
           <Input
             type="date"
-            value={orderForm.required_date}
-            onChange={(e) => setOrderForm(prev => ({ ...prev, required_date: e.target.value }))}
+            value={orderForm.expected_delivery_date}
+            onChange={(e) => setOrderForm(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+          <Input
+            type="number"
+            min="1"
+            value={orderForm.quantity}
+            onChange={(e) => setOrderForm(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+            placeholder="Enter quantity"
           />
         </div>
         <div>
@@ -410,7 +430,15 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
                       <p className="text-lg font-semibold text-green-600">
                         {formatCurrency(template.total_cost)}
                       </p>
-                      <p className="text-xs text-gray-500">Total Cost</p>
+                      <p className="text-xs text-gray-500">Unit Cost</p>
+                      {orderForm.quantity > 1 && (
+                        <>
+                          <p className="text-sm font-semibold text-blue-600">
+                            {formatCurrency(template.total_cost * orderForm.quantity)}
+                          </p>
+                          <p className="text-xs text-gray-500">Total for {orderForm.quantity} units</p>
+                        </>
+                      )}
                       {selectedBOMTemplate?.id === template.id && (
                         <Badge className="mt-2 bg-blue-100 text-blue-800">Selected</Badge>
                       )}
@@ -462,8 +490,14 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
             <p className="text-sm text-gray-600 mb-2">
               Kit: {skus.find(s => s.id === selectedBOMTemplate.kit_sku_id)?.sku_name}
             </p>
+            <p className="text-sm text-gray-600 mb-2">
+              Quantity: {orderForm.quantity} units
+            </p>
             <p className="text-lg font-semibold text-green-600">
-              Total Cost: {formatCurrency(selectedBOMTemplate.total_cost)}
+              Total Cost: {formatCurrency(selectedBOMTemplate.total_cost * orderForm.quantity)}
+            </p>
+            <p className="text-xs text-gray-500">
+              ({formatCurrency(selectedBOMTemplate.total_cost)} per unit × {orderForm.quantity} units)
             </p>
           </CardContent>
         </Card>
@@ -502,6 +536,11 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
                       </span>
                     )}
                   </p>
+                  {orderForm.quantity > 1 && (
+                    <p className="text-xs text-gray-500 ml-7">
+                      ({item.component.quantity_required} per unit × {orderForm.quantity} units = {item.required_quantity} total)
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <Badge className={item.sufficient ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}>
@@ -551,7 +590,7 @@ export default function SalesOrderCreationForm({ onClose, onOrderCreated }: Sale
   );
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto">
+    <div>
       {/* Progress Steps */}
       <div className="mb-6 flex items-center justify-center">
         <div className="flex items-center space-x-4">

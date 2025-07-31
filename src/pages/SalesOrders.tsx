@@ -41,6 +41,7 @@ interface SalesOrder {
   priority: 'low' | 'medium' | 'high';
   order_date: string;
   required_date: string;
+  quantity?: number;
   shipping_method: 'standard' | 'express' | 'overnight' | 'freight';
   payment_terms: 'cod' | 'net_30' | 'net_60' | 'prepaid';
   payment_status: 'pending' | 'paid' | 'partial' | 'overdue';
@@ -50,6 +51,8 @@ interface SalesOrder {
   created_at: string;
   updated_at: string;
   order_items?: SalesOrderItem[];
+  bom_template_id?: number;
+  production_required?: boolean;
 }
 
 interface SalesOrderItem {
@@ -428,8 +431,19 @@ export default function SalesOrders() {
                     </div>
                     <div className="ml-13">
                       <p className="text-sm text-gray-600">
-                        Items: {order.order_items?.length || 0} • 
-                        Total Qty: {order.order_items?.reduce((sum, item) => sum + item.quantity_ordered, 0) || 0}
+                        {order.quantity ? (
+                          <>
+                            Order Qty: {order.quantity} • 
+                            Items: {order.order_items?.length || 0} • 
+                            Line Qty: {order.order_items?.reduce((sum, item) => sum + item.quantity_ordered, 0) || 0}
+                          </>
+                        ) : (
+                          <>
+                            Items: {order.order_items?.length || 0} • 
+                            Total Qty: {order.order_items?.reduce((sum, item) => sum + item.quantity_ordered, 0) || 0}
+                          </>
+                        )}
+                        {order.bom_template_id && <span className="text-blue-600"> • BOM Production</span>}
                       </p>
                       <p className="text-xs text-gray-500">
                         Order Date: {new Date(order.order_date).toLocaleDateString()} • 
@@ -529,6 +543,8 @@ export default function SalesOrders() {
                     </p>
                     <p className="text-sm"><strong>Order Date:</strong> {new Date(selectedOrder.order_date).toLocaleDateString()}</p>
                     <p className="text-sm"><strong>Required Date:</strong> {new Date(selectedOrder.required_date).toLocaleDateString()}</p>
+                    {selectedOrder.quantity && <p className="text-sm"><strong>Order Quantity:</strong> {selectedOrder.quantity} units</p>}
+                    {selectedOrder.bom_template_id && <p className="text-sm"><strong>BOM Production:</strong> <Badge variant="outline" className="ml-1 text-xs bg-blue-50 text-blue-700">Required</Badge></p>}
                   </div>
                 </div>
               </div>

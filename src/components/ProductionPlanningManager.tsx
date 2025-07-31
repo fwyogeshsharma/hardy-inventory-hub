@@ -128,21 +128,26 @@ export default function ProductionPlanningManager({ onProductionStarted }: Produ
         dataService.getSKUs()
       ]);
 
-      // Check inventory for each component
+      // Check inventory for each component (considering sales order quantity if available)
+      const salesOrderQuantity = plan.sales_order.quantity || 1; // Default to 1 if not specified
+      
       const inventoryResults = bomComponents.map(component => {
         const sku = skus.find(s => s.id === component.component_sku_id);
         const skuInventory = inventory.find(inv => inv.sku_id === component.component_sku_id);
         const availableQuantity = skuInventory ? skuInventory.quantity_available : 0;
-        const sufficient = availableQuantity >= component.quantity_required;
-        const shortage = Math.max(0, component.quantity_required - availableQuantity);
+        const totalRequired = component.quantity_required * salesOrderQuantity;
+        const sufficient = availableQuantity >= totalRequired;
+        const shortage = Math.max(0, totalRequired - availableQuantity);
 
         return {
           component,
           sku,
-          required_quantity: component.quantity_required,
+          required_quantity: totalRequired,
           available_quantity: availableQuantity,
           sufficient,
-          shortage
+          shortage,
+          per_unit_quantity: component.quantity_required,
+          order_quantity: salesOrderQuantity
         };
       });
 
