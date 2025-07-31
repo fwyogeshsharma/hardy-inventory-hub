@@ -1,5 +1,6 @@
 // Database utility functions for SQLite integration
 // This module provides a clean interface for database operations
+// Updated: 2025-01-31 - Added inventory movements tracking
 
 interface DBConfig {
   databasePath: string;
@@ -235,6 +236,24 @@ export interface Vendor {
   notes?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface InventoryMovement {
+  id: number;
+  sku_id: number;
+  warehouse_id: number;
+  movement_type: 'production' | 'sale' | 'receipt' | 'transfer' | 'adjustment';
+  quantity_change: number;
+  quantity_before: number;
+  quantity_after: number;
+  reference_type?: string;
+  reference_id?: number;
+  notes?: string;
+  created_at: string;
+  
+  // Related data
+  sku?: SKU;
+  warehouse?: Warehouse;
 }
 
 // Data access layer - currently using localStorage with database-like structure
@@ -1950,6 +1969,14 @@ export class InventoryManager {
   
   private constructor() {
     this.dataService = DataService.getInstance();
+    
+    // Ensure dataService has the latest methods
+    if (typeof this.dataService.createInventoryMovement !== 'function') {
+      console.warn('DataService is missing createInventoryMovement method, recreating instance');
+      // Force recreation of DataService singleton
+      (DataService as any).instance = null;
+      this.dataService = DataService.getInstance();
+    }
   }
   
   public static getInstance(): InventoryManager {
@@ -1976,7 +2003,7 @@ export class InventoryManager {
   }
 
   // Update inventory levels and trigger workflows
-  async updateInventoryLevel(skuId: number, warehouseId: number, quantityChange: number, transactionType: string, referenceId?: number): Promise<void> {
+  async updateInventoryLevel(skuId: number, warehouseId: number, quantityChange: number, transactionType: string, referenceId?: number, notes?: string): Promise<void> {
     try {
       // Get current inventory
       const inventory = await this.dataService.getInventory();
@@ -1986,14 +2013,16 @@ export class InventoryManager {
         throw new Error(`Inventory record not found for SKU ${skuId} in warehouse ${warehouseId}`);
       }
 
+      const quantityBefore = inventoryRecord.quantity_on_hand;
+      const quantityAfter = Math.max(0, quantityBefore + quantityChange);
+
       // Update inventory levels
       const updatedInventory = inventory.map(inv => {
         if (inv.sku_id === skuId && inv.warehouse_id === warehouseId) {
-          const newQuantity = Math.max(0, inv.quantity_on_hand + quantityChange);
           return {
             ...inv,
-            quantity_on_hand: newQuantity,
-            quantity_available: newQuantity - inv.quantity_reserved,
+            quantity_on_hand: quantityAfter,
+            quantity_available: quantityAfter - inv.quantity_reserved,
             updated_at: new Date().toISOString()
           };
         }
@@ -2002,15 +2031,48 @@ export class InventoryManager {
 
       localStorage.setItem('inventory', JSON.stringify(updatedInventory));
 
-      // Create inventory transaction record
-      await this.createInventoryTransaction({
-        sku_id: skuId,
-        warehouse_id: warehouseId,
-        transaction_type: transactionType as any,
-        quantity: quantityChange,
-        reference_id: referenceId,
-        notes: `Inventory ${transactionType} - Quantity: ${quantityChange}`
-      });
+      // Create inventory movement record (with fallback for backwards compatibility)
+      try {
+        if (typeof this.dataService.createInventoryMovement === 'function') {
+          await this.dataService.createInventoryMovement({
+            sku_id: skuId,
+            warehouse_id: warehouseId,
+            movement_type: transactionType as 'production' | 'sale' | 'receipt' | 'transfer' | 'adjustment',
+            quantity_change: quantityChange,
+            quantity_before: quantityBefore,
+            quantity_after: quantityAfter,
+            reference_type: transactionType,
+            reference_id: referenceId,
+            notes: notes || `Inventory ${transactionType} - Quantity: ${quantityChange}`
+          });
+        } else {
+          // Fallback: Create movement record directly in localStorage
+          const movements = localStorage.getItem('inventory_movements');
+          const existingMovements = movements ? JSON.parse(movements) : [];
+          const newId = Math.max(0, ...existingMovements.map((m: any) => m.id)) + 1;
+          
+          const newMovement = {
+            id: newId,
+            sku_id: skuId,
+            warehouse_id: warehouseId,
+            movement_type: transactionType,
+            quantity_change: quantityChange,
+            quantity_before: quantityBefore,
+            quantity_after: quantityAfter,
+            reference_type: transactionType,
+            reference_id: referenceId,
+            notes: notes || `Inventory ${transactionType} - Quantity: ${quantityChange}`,
+            created_at: new Date().toISOString()
+          };
+          
+          existingMovements.push(newMovement);
+          localStorage.setItem('inventory_movements', JSON.stringify(existingMovements));
+          console.log('Created inventory movement via fallback method:', newMovement);
+        }
+      } catch (error) {
+        console.error('Error creating inventory movement:', error);
+        // Don't throw error to avoid breaking inventory updates
+      }
 
       const updatedRecord = updatedInventory.find(inv => inv.sku_id === skuId && inv.warehouse_id === warehouseId)!;
       
@@ -2612,6 +2674,11 @@ export class InventoryManager {
     return items ? JSON.parse(items) : [];
   }
 
+  // Get inventory movements
+  async getInventoryMovements(): Promise<InventoryMovement[]> {
+    return await this.dataService.getInventoryMovements();
+  }
+
   // Production Job Order workflow methods
   async createProductionJobOrder(orderData: {
     sku_id: number;
@@ -2952,8 +3019,50 @@ export class InventoryManager {
       throw error;
     }
   }
+
+  // Get inventory movements
+  async getInventoryMovements(): Promise<InventoryMovement[]> {
+    const movements = localStorage.getItem('inventory_movements');
+    return movements ? JSON.parse(movements) : [];
+  }
+
+  // Create inventory movement record
+  async createInventoryMovement(movementData: {
+    sku_id: number;
+    warehouse_id: number;
+    movement_type: 'production' | 'sale' | 'receipt' | 'transfer' | 'adjustment';
+    quantity_change: number;
+    quantity_before: number;
+    quantity_after: number;
+    reference_type?: string;
+    reference_id?: number;
+    notes?: string;
+  }): Promise<InventoryMovement> {
+    try {
+      const movements = await this.getInventoryMovements();
+      const newId = Math.max(0, ...movements.map(m => m.id)) + 1;
+      
+      const newMovement: InventoryMovement = {
+        id: newId,
+        ...movementData,
+        created_at: new Date().toISOString()
+      };
+      
+      movements.push(newMovement);
+      localStorage.setItem('inventory_movements', JSON.stringify(movements));
+      
+      return newMovement;
+    } catch (error) {
+      console.error('Error creating inventory movement:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
 export const dataService = DataService.getInstance();
 export const inventoryManager = InventoryManager.getInstance();
+
+// Debug logging
+console.log('Database module loaded with methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(dataService)));
+console.log('DataService has createInventoryMovement:', typeof dataService.createInventoryMovement === 'function');

@@ -53,7 +53,14 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
-  ShoppingCart
+  ShoppingCart,
+  Star,
+  Target,
+  Award,
+  Percent,
+  BarChart2,
+  MessageSquare,
+  ThumbsUp
 } from "lucide-react";
 
 export default function Reports() {
@@ -163,7 +170,7 @@ export default function Reports() {
         },
         {
           id: 3,
-          name: " Inventory performance report",
+          name: "Inventory Performance Report",
           description: "Parts categorized by value and movement frequency",
           lastGenerated: "1 day ago",
           status: "Scheduled",
@@ -874,6 +881,140 @@ export default function Reports() {
                 </div>
               )}
 
+              {selectedReport.id === 3 && reportData[3] && ( // Inventory Performance (ABC Analysis)
+                <div className="space-y-6">
+                  {/* KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Total SKUs</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[3]?.data.totalSKUs || 0}</p>
+                          </div>
+                          <Package className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">Active products</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">Category A</p>
+                            <p className="text-2xl font-bold text-green-600">{reportData[3]?.data.categoryA?.percentage || 0}%</p>
+                          </div>
+                          <Star className="h-8 w-8 text-green-400" />
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">{reportData[3]?.data.categoryA?.count || 0} high-value items</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Category B</p>
+                            <p className="text-2xl font-bold text-orange-600">{reportData[3]?.data.categoryB?.percentage || 0}%</p>
+                          </div>
+                          <Target className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <p className="text-xs text-orange-600 mt-1">{reportData[3]?.data.categoryB?.count || 0} medium-value items</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Category C</p>
+                            <p className="text-2xl font-bold text-gray-600">{reportData[3]?.data.categoryC?.percentage || 0}%</p>
+                          </div>
+                          <Minus className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{reportData[3]?.data.categoryC?.count || 0} low-value items</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* ABC Analysis Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <PieChart className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        ABC Classification Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <RechartsPieChart>
+                          <Pie
+                            data={[
+                              { name: 'Category A (High Value)', value: reportData[3]?.data.categoryA?.value || 0, count: reportData[3]?.data.categoryA?.count || 0 },
+                              { name: 'Category B (Medium Value)', value: reportData[3]?.data.categoryB?.value || 0, count: reportData[3]?.data.categoryB?.count || 0 },
+                              { name: 'Category C (Low Value)', value: reportData[3]?.data.categoryC?.value || 0, count: reportData[3]?.data.categoryC?.count || 0 }
+                            ]}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={({ name, percent }) => `${name.split(' ')[1]} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            <Cell fill="#22c55e" />
+                            <Cell fill="#f97316" />
+                            <Cell fill="#6b7280" />
+                          </Pie>
+                          <Tooltip formatter={(value, name) => [`$${value.toLocaleString()}`, name]} />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Top Performers Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Top Performing SKUs
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">SKU</th>
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Revenue</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Margin %</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Turnover</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData[3]?.data.topPerformers || []).map((performer, idx) => (
+                              <tr key={idx} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4">
+                                  <Badge variant="outline" className="text-xs">{performer.sku}</Badge>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="font-medium">{performer.name}</span>
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono font-semibold text-[#3997cd]">${performer.revenue.toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right">
+                                  <span className={`font-medium ${performer.margin > 30 ? 'text-green-600' : performer.margin > 20 ? 'text-orange-600' : 'text-red-600'}`}>
+                                    {performer.margin.toFixed(1)}%
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-right font-medium">{performer.turnover.toFixed(1)}x</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               {selectedReport.id === 4 && ( // Sales Performance
                 <div className="space-y-6">
                   {/* KPI Cards */}
@@ -1048,8 +1189,692 @@ export default function Reports() {
                 </div>
               )}
 
+              {selectedReport.id === 5 && ( // Customer Analysis Report
+                <div className="space-y-6">
+                  {/* Customer KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Total Customers</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[5]?.data.totalCustomers || 0}</p>
+                          </div>
+                          <Users className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <TrendIndicator value={reportData[5]?.data.customerGrowth || 0} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">Total Revenue</p>
+                            <p className="text-2xl font-bold text-green-600">${((reportData[5]?.data.totalRevenue || 0) / 1000000).toFixed(2)}M</p>
+                          </div>
+                          <DollarSign className="h-8 w-8 text-green-400" />
+                        </div>
+                        <TrendIndicator value={15.2} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-700">Avg Order Value</p>
+                            <p className="text-2xl font-bold text-purple-600">${Math.round(reportData[5]?.data.avgOrderValue || 0)}</p>
+                          </div>
+                          <ShoppingCart className="h-8 w-8 text-purple-400" />
+                        </div>
+                        <TrendIndicator value={-2.4} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Active Rate</p>
+                            <p className="text-2xl font-bold text-orange-600">87%</p>
+                          </div>
+                          <Activity className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <TrendIndicator value={4.1} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Customer Performance Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Award className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Top Customer Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">Customer</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Revenue</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Orders</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Avg Order</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Last Order</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData[5]?.data.topCustomers || []).slice(0, 8).map((customer, idx) => (
+                              <tr key={idx} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm mr-3">
+                                      {customer.name?.charAt(0) || 'U'}
+                                    </div>
+                                    <span className="font-medium">{customer.name || 'Unknown Customer'}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono font-semibold text-[#3997cd]">${(customer.revenue || 0).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right font-mono">{customer.orders || 0}</td>
+                                <td className="py-3 px-4 text-right font-mono">${Math.round((customer.revenue || 0) / Math.max(customer.orders || 1, 1)).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right text-sm text-gray-600">{customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {selectedReport.id === 6 && ( // Profit Margin Analysis
+                <div className="space-y-6">
+                  {/* Profit KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-emerald-700">Overall Margin</p>
+                            <p className="text-2xl font-bold text-emerald-600">{(reportData[6]?.data.overallMargin || 0).toFixed(1)}%</p>
+                          </div>
+                          <Percent className="h-8 w-8 text-emerald-400" />
+                        </div>
+                        <TrendIndicator value={2.8} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Total Profit</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">${((reportData[6]?.data.totalProfit || 0) / 1000000).toFixed(2)}M</p>
+                          </div>
+                          <DollarSign className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <TrendIndicator value={18.5} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-700">Total Revenue</p>
+                            <p className="text-2xl font-bold text-purple-600">${((reportData[6]?.data.totalRevenue || 0) / 1000000).toFixed(2)}M</p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-purple-400" />
+                        </div>
+                        <TrendIndicator value={12.4} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Categories</p>
+                            <p className="text-2xl font-bold text-orange-600">{(reportData[6]?.data.categoryMargins || []).length}</p>
+                          </div>
+                          <BarChart3 className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <TrendIndicator value={1} isPercentage={false} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Margin Analysis Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart2 className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Profit Margin by Category
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={reportData[6]?.data.categoryMargins || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="category" stroke="#666" angle={-45} textAnchor="end" height={100} />
+                          <YAxis stroke="#666" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #3997cd',
+                              borderRadius: '8px'
+                            }}
+                            formatter={(value, name) => [
+                              name === 'margin' ? `${value.toFixed(1)}%` : `$${value.toLocaleString()}`,
+                              name === 'margin' ? 'Margin %' : name === 'revenue' ? 'Revenue' : 'Profit'
+                            ]}
+                          />
+                          <Bar dataKey="margin" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Category Performance Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Target className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Category Profit Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Revenue</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Cost</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Profit</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Margin %</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData[6]?.data.categoryMargins || []).map((cat, idx) => (
+                              <tr key={idx} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4">
+                                  <span className="font-medium">{cat.category}</span>
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono font-semibold text-[#3997cd]">${(cat.revenue || 0).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right font-mono text-red-600">${(cat.cost || 0).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right font-mono text-green-600 font-semibold">${(cat.profit || 0).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right">
+                                  <span className={`font-medium ${
+                                    (cat.margin || 0) > 30 ? 'text-green-600' : 
+                                    (cat.margin || 0) > 20 ? 'text-orange-600' : 'text-red-600'
+                                  }`}>
+                                    {(cat.margin || 0).toFixed(1)}%
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {selectedReport.id === 7 && ( // Vendor Performance Report
+                <div className="space-y-6">
+                  {/* Vendor KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Total Vendors</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[7]?.data.totalVendors || 0}</p>
+                          </div>
+                          <Building2 className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">{reportData[7]?.data.activeVendors || 0} active</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">Quality Rating</p>
+                            <p className="text-2xl font-bold text-green-600">{(reportData[7]?.data.avgQualityRating || 0).toFixed(1)}</p>
+                          </div>
+                          <Star className="h-8 w-8 text-green-400" />
+                        </div>
+                        <TrendIndicator value={0.3} isPercentage={false} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-700">Delivery Rating</p>
+                            <p className="text-2xl font-bold text-purple-600">{(reportData[7]?.data.avgDeliveryRating || 0).toFixed(1)}</p>
+                          </div>
+                          <Truck className="h-8 w-8 text-purple-400" />
+                        </div>
+                        <TrendIndicator value={0.5} isPercentage={false} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Performance</p>
+                            <p className="text-2xl font-bold text-orange-600">92%</p>
+                          </div>
+                          <ThumbsUp className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <TrendIndicator value={3.2} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Vendor Performance Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart3 className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Vendor Performance Ratings
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={reportData[7]?.data.vendorPerformance || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="name" stroke="#666" angle={-45} textAnchor="end" height={100} />
+                          <YAxis stroke="#666" domain={[0, 5]} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #3997cd',
+                              borderRadius: '8px'
+                            }}
+                            formatter={(value, name) => [
+                              value.toFixed(1),
+                              name === 'qualityRating' ? 'Quality' : name === 'deliveryRating' ? 'Delivery' : name === 'priceRating' ? 'Price' : 'Overall Score'
+                            ]}
+                          />
+                          <Bar dataKey="qualityRating" fill="#22c55e" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="deliveryRating" fill="#3997cd" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="priceRating" fill="#f59e0b" radius={[2, 2, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Vendor Details Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Building2 className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Vendor Performance Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">Vendor</th>
+                              <th className="text-center py-3 px-4 font-semibold text-gray-700">Quality</th>
+                              <th className="text-center py-3 px-4 font-semibold text-gray-700">Delivery</th>
+                              <th className="text-center py-3 px-4 font-semibold text-gray-700">Price</th>
+                              <th className="text-center py-3 px-4 font-semibold text-gray-700">Lead Time</th>
+                              <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Score</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData[7]?.data.vendorPerformance || []).map((vendor, idx) => (
+                              <tr key={idx} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4">
+                                  <span className="font-medium">{vendor.name}</span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <div className="flex items-center justify-center">
+                                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                                    <span>{vendor.qualityRating?.toFixed(1) || '0.0'}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <div className="flex items-center justify-center">
+                                    <Truck className="h-4 w-4 text-blue-400 mr-1" />
+                                    <span>{vendor.deliveryRating?.toFixed(1) || '0.0'}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <div className="flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4 text-green-400 mr-1" />
+                                    <span>{vendor.priceRating?.toFixed(1) || '0.0'}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-center font-mono">{vendor.leadTime || 0} days</td>
+                                <td className="py-3 px-4 text-center">
+                                  <Badge className={`${
+                                    vendor.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'
+                                  }`}>
+                                    {vendor.status}
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <span className={`font-bold ${
+                                    (vendor.overallScore || 0) >= 4.0 ? 'text-green-600' : 
+                                    (vendor.overallScore || 0) >= 3.0 ? 'text-orange-600' : 'text-red-600'
+                                  }`}>
+                                    {vendor.overallScore?.toFixed(1) || '0.0'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {selectedReport.id === 8 && ( // Order Fulfillment Report
+                <div className="space-y-6">
+                  {/* Fulfillment KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Total Orders</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{reportData[8]?.data.totalOrders || 0}</p>
+                          </div>
+                          <ShoppingCart className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">{reportData[8]?.data.completedOrders || 0} completed</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">On-Time Rate</p>
+                            <p className="text-2xl font-bold text-green-600">{(reportData[8]?.data.onTimeDeliveryRate || 0).toFixed(1)}%</p>
+                          </div>
+                          <CheckCircle className="h-8 w-8 text-green-400" />
+                        </div>
+                        <TrendIndicator value={2.8} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-700">Avg Fulfillment</p>
+                            <p className="text-2xl font-bold text-purple-600">{(reportData[8]?.data.avgFulfillmentTime || 0).toFixed(1)}d</p>
+                          </div>
+                          <Clock className="h-8 w-8 text-purple-400" />
+                        </div>
+                        <TrendIndicator value={-0.4} isPercentage={false} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Pending Orders</p>
+                            <p className="text-2xl font-bold text-orange-600">{reportData[8]?.data.pendingOrders || 0}</p>
+                          </div>
+                          <Timer className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <TrendIndicator value={-5.2} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Fulfillment Trend Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Monthly Fulfillment Performance
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <ComposedChart data={reportData[8]?.data.monthlyFulfillment || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" stroke="#666" />
+                          <YAxis stroke="#666" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#fff', 
+                              border: '1px solid #3997cd',
+                              borderRadius: '8px'
+                            }}
+                            formatter={(value, name) => [
+                              name === 'avgTime' ? `${value} days` : value,
+                              name === 'orders' ? 'Orders' : name === 'onTime' ? 'On-Time Deliveries' : 'Avg Time'
+                            ]}
+                          />
+                          <Bar dataKey="orders" fill="#3997cd" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="onTime" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                          <Line 
+                            type="monotone" 
+                            dataKey="avgTime" 
+                            stroke="#f59e0b" 
+                            strokeWidth={3}
+                            dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {selectedReport.id === 9 && ( // Production Efficiency Report
+                <div className="space-y-6">
+                  {/* Production KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Units Produced</p>
+                            <p className="text-2xl font-bold text-[#3997cd]">{(reportData[9]?.data.totalUnitsProduced || 0).toLocaleString()}</p>
+                          </div>
+                          <Package className="h-8 w-8 text-blue-400" />
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">Target: {(reportData[9]?.data.targetUnits || 0).toLocaleString()}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">Efficiency</p>
+                            <p className="text-2xl font-bold text-green-600">{(reportData[9]?.data.efficiency || 0).toFixed(1)}%</p>
+                          </div>
+                          <Activity className="h-8 w-8 text-green-400" />
+                        </div>
+                        <TrendIndicator value={3.2} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-red-700">Defect Rate</p>
+                            <p className="text-2xl font-bold text-red-600">{(reportData[9]?.data.defectRate || 0).toFixed(1)}%</p>
+                          </div>
+                          <AlertTriangle className="h-8 w-8 text-red-400" />
+                        </div>
+                        <TrendIndicator value={-0.3} isPercentage={true} />
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-orange-700">Cycle Time</p>
+                            <p className="text-2xl font-bold text-orange-600">{(reportData[9]?.data.avgCycleTime || 0).toFixed(1)}h</p>
+                          </div>
+                          <Clock className="h-8 w-8 text-orange-400" />
+                        </div>
+                        <TrendIndicator value={-1.2} isPercentage={false} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Production Charts Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Weekly Production Trend */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <TrendingUp className="h-5 w-5 mr-2 text-[#3997cd]" />
+                          Weekly Production Trend
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <AreaChart data={reportData[9]?.data.weeklyTrend || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis dataKey="week" stroke="#666" />
+                            <YAxis stroke="#666" />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: '#fff', 
+                                border: '1px solid #3997cd',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value, name) => [
+                                name === 'efficiency' ? `${value}%` : value,
+                                name === 'units' ? 'Units Produced' : name === 'target' ? 'Target' : 'Efficiency'
+                              ]}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="units" 
+                              stroke="#3997cd" 
+                              fill="#3997cd" 
+                              fillOpacity={0.3}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="target" 
+                              stroke="#f59e0b" 
+                              fill="#f59e0b" 
+                              fillOpacity={0.1}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    {/* Shift Performance */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Wrench className="h-5 w-5 mr-2 text-[#3997cd]" />
+                          Production by Shift
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={reportData[9]?.data.productionByShift || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis dataKey="shift" stroke="#666" />
+                            <YAxis stroke="#666" />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: '#fff', 
+                                border: '1px solid #3997cd',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value, name) => [
+                                name === 'efficiency' || name === 'quality' ? `${value}%` : value,
+                                name === 'units' ? 'Units' : name === 'efficiency' ? 'Efficiency' : 'Quality'
+                              ]}
+                            />
+                            <Bar dataKey="units" fill="#3997cd" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="efficiency" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="quality" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Production Summary Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart3 className="h-5 w-5 mr-2 text-[#3997cd]" />
+                        Shift Performance Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-3 px-4 font-semibold text-gray-700">Shift</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Units Produced</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Efficiency %</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Quality %</th>
+                              <th className="text-right py-3 px-4 font-semibold text-gray-700">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(reportData[9]?.data.productionByShift || []).map((shift, idx) => (
+                              <tr key={idx} className="border-b hover:bg-gray-50">
+                                <td className="py-3 px-4">
+                                  <span className="font-medium">{shift.shift} Shift</span>
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono font-semibold text-[#3997cd]">{(shift.units || 0).toLocaleString()}</td>
+                                <td className="py-3 px-4 text-right">
+                                  <span className={`font-medium ${
+                                    (shift.efficiency || 0) >= 90 ? 'text-green-600' : 
+                                    (shift.efficiency || 0) >= 80 ? 'text-orange-600' : 'text-red-600'
+                                  }`}>
+                                    {(shift.efficiency || 0).toFixed(1)}%
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <span className={`font-medium ${
+                                    (shift.quality || 0) >= 98 ? 'text-green-600' : 
+                                    (shift.quality || 0) >= 95 ? 'text-orange-600' : 'text-red-600'
+                                  }`}>
+                                    {(shift.quality || 0).toFixed(1)}%
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <Badge className={`${
+                                    (shift.efficiency || 0) >= 90 && (shift.quality || 0) >= 98 ? 'bg-green-100 text-green-700 border-green-200' : 
+                                    (shift.efficiency || 0) >= 80 && (shift.quality || 0) >= 95 ? 'bg-orange-100 text-orange-700 border-orange-200' : 
+                                    'bg-red-100 text-red-700 border-red-200'
+                                  }`}>
+                                    {
+                                      (shift.efficiency || 0) >= 90 && (shift.quality || 0) >= 98 ? 'Excellent' : 
+                                      (shift.efficiency || 0) >= 80 && (shift.quality || 0) >= 95 ? 'Good' : 'Needs Improvement'
+                                    }
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               {/* Generic data display for other reports */}
-              {!loadingReports[selectedReport.id] && reportData[selectedReport.id] && ![1, 2, 4].includes(selectedReport.id) && (
+              {!loadingReports[selectedReport.id] && reportData[selectedReport.id] && ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(selectedReport.id) && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Report Data</CardTitle>

@@ -46,7 +46,7 @@ export class PDFExportService {
       }
 
       // Add the image
-      const yPosition = options.includeHeader !== false ? 30 : 10;
+      const yPosition = options.includeHeader !== false ? 50 : 10;
       pdf.addImage(imgData, 'PNG', 10, yPosition, finalWidth, finalHeight);
 
       // Add footer if requested
@@ -73,7 +73,7 @@ export class PDFExportService {
 
       // Add header
       this.addHeader(pdf, reportData.title, `Generated on ${new Date().toLocaleDateString()}`);
-      yPosition = 40;
+      yPosition = 55;
 
       // Add report content based on type
       if (reportData.id === 1) { // Stock Ledger
@@ -107,24 +107,28 @@ export class PDFExportService {
   }
 
   private addHeader(pdf: jsPDF, title: string, subtitle?: string): void {
-    // Company header
+    // Company header with AutoFlow branding
     pdf.setFontSize(20);
     pdf.setTextColor('#3997cd');
-    pdf.text('Hardy Inventory Hub', 20, 15);
+    pdf.text('AutoFlow', 20, 15);
+    
+    pdf.setFontSize(10);
+    pdf.setTextColor('#666666');
+    pdf.text('Automated Inventory Management System', 20, 22);
     
     pdf.setFontSize(16);
     pdf.setTextColor('#000000');
-    pdf.text(title, 20, 25);
+    pdf.text(title, 20, 35);
     
     if (subtitle) {
       pdf.setFontSize(10);
       pdf.setTextColor('#666666');
-      pdf.text(subtitle, 20, 32);
+      pdf.text(subtitle, 20, 42);
     }
 
     // Add line separator
     pdf.setDrawColor('#3997cd');
-    pdf.line(20, 35, pdf.internal.pageSize.getWidth() - 20, 35);
+    pdf.line(20, 45, pdf.internal.pageSize.getWidth() - 20, 45);
   }
 
   private addFooter(pdf: jsPDF): void {
@@ -136,7 +140,7 @@ export class PDFExportService {
     
     pdf.setFontSize(8);
     pdf.setTextColor('#666666');
-    pdf.text('Hardy Inventory Hub - Automotive Parts Management System', 20, pageHeight - 15);
+    pdf.text('AutoFlow - Automated Inventory Management System', 20, pageHeight - 15);
     pdf.text(`Generated on ${new Date().toLocaleString()}`, 20, pageHeight - 10);
     pdf.text(`Page 1`, pageWidth - 30, pageHeight - 10);
   }

@@ -167,7 +167,8 @@ export default function Production() {
         
         toast({
           title: "Inspection Approved",
-          description: `Production completed and ${inspectionModal.order.quantity_planned} units added to warehouse`,
+          description: `Production completed! ${inspectionModal.order.quantity_planned} units of ${inspectionModal.order.kit_sku?.sku_name} added to warehouse. Check the Warehouse page to see real-time updates.`,
+          duration: 6000,
         });
       } else {
         toast({
